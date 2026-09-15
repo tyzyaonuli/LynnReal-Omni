@@ -34,8 +34,8 @@ bundle_hash="$(sha256sum "$stage_script" "$sync_script" "$downloader" "$manifest
 bundle_name="model-cache-$bundle_hash.tar.gz"
 bundle_uri="$THAILAND_OSS_CLI/code/lynnreal-omni/$bundle_name"
 
-account_id="$(aliyun --profile "$PROFILE" --user-agent "$USER_AGENT" \
-  sts GetCallerIdentity | jq -r .AccountId)"
+account_id="$(aliyun --profile "$PROFILE" --connect-timeout 15 --read-timeout 30 \
+  --retry-count 2 --user-agent "$USER_AGENT" sts GetCallerIdentity | jq -r .AccountId)"
 role_arn="acs:ram::$account_id:role/zing-thailand-training"
 credential_config="$(jq -nc --arg account "$account_id" --arg arn "$role_arn" '{EnableCredentialInject:true,AliyunEnvRoleKey:"zing-runtime",CredentialConfigItems:[{Key:"zing-runtime",Type:"Role",Roles:[{AssumeRoleFor:$account,RoleType:"service",RoleArn:$arn}]}]}')"
 

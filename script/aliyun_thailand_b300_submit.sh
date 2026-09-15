@@ -88,7 +88,8 @@ fi
 bundle_uri="oss://leap-worldmodel-thailand/world-model/code/lynnreal-omni/$bundle_id.tar.gz"
 job_name="${JOB_NAME:-lynnreal-b300-$RUN_MODE-${EVAL_VARIANT:-both}-${release_sha:0:8}-$(date -u +%Y%m%d-%H%M%S)}"
 
-account_id="$(aliyun --profile "$PROFILE" --region "$REGION" --user-agent "$USER_AGENT" \
+account_id="$(aliyun --profile "$PROFILE" --region "$REGION" --connect-timeout 15 \
+  --read-timeout 30 --retry-count 2 --user-agent "$USER_AGENT" \
   sts GetCallerIdentity | jq -r .AccountId)"
 role_arn="acs:ram::$account_id:role/$RAM_ROLE"
 credential_config="$(jq -nc --arg account "$account_id" --arg arn "$role_arn" '{EnableCredentialInject:true,AliyunEnvRoleKey:"zing-runtime",CredentialConfigItems:[{Key:"zing-runtime",Type:"Role",Roles:[{AssumeRoleFor:$account,RoleType:"service",RoleArn:$arn}]}]}')"
@@ -150,7 +151,8 @@ if [[ "$SUBMIT" == true ]]; then
       "$bundle_dir/source.tar.gz" "$bundle_uri" --region "$REGION" \
       --endpoint "oss-$REGION.aliyuncs.com" --force >/dev/null
   fi
-  acr_auth="$(aliyun --profile "$PROFILE" --region "$REGION" --user-agent "$USER_AGENT" \
+  acr_auth="$(aliyun --profile "$PROFILE" --region "$REGION" --connect-timeout 15 \
+    --read-timeout 30 --retry-count 2 --user-agent "$USER_AGENT" \
     cr get-authorization-token --instance-id "$ACR_INSTANCE_ID")"
   acr_username="$(jq -r '.TempUsername // empty' <<<"$acr_auth")"
   acr_password="$(jq -r '.AuthorizationToken // empty' <<<"$acr_auth")"
