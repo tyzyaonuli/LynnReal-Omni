@@ -84,6 +84,8 @@ bash script/aliyun_thailand_b300_submit.sh --submit \
 
 按已经测得的 10 秒样本速度估算，单条 Flash 核心生成约 35 秒，Standard 约 98 秒；总时长还需加首次加载、一次 warmup、prompt conditioning 和视频编码。`PAI_MAX_MINUTES` 要根据样本数留余量，避免完成大部分样本后被平台超时终止。
 
+不同 prompt token 数会形成不同的 INT8 行数。某个行数第一次出现时可能包含 Triton autotune/编译，单条 wall 会暂时高于热态基线；缓存会跨 Job 持久化。正式速度比较仍使用固定 shape 的官方 speed-test，不要拿 eval 中首个新 shape 的 wall 做性能回归判断。
+
 ## 4. 结果与 eval 接口
 
 提交响应中的 `JobId` 是唯一 run ID。结果同时写到：
@@ -143,9 +145,22 @@ Job 运行中只有 `progress.jsonl`，成功收尾时才原子改名为 `result
 └── cache/compiled/
 ```
 
-启动流程会把小型 Python overlay 解压到节点本地盘，权重通过只读 symlink 使用 CPFS 文件，Triton/Inductor 缓存继续留在 CPFS。新 code revision 第一次可能产生少量新编译，后续同 revision/同 kernel 会命中缓存。
+启动流程会把小型 Python overlay 解压到节点本地盘，权重通过只读 symlink 使用 CPFS 文件，Triton/Inductor 缓存继续留在 CPFS。缓存 key 由模型 Python 源码、`requirements.txt` 和固定 Diffusers 内容哈希生成；只修改文档或提交器不会让缓存失效。模型运行时代码或依赖内容变化时会使用新缓存，避免错误复用旧二进制。
 
-## 6. 不要踩的坑
+## 6. 已验证的批量 smoke
+
+fork commit `351f41e16ec29f9ae51b62ac5d531107e270e688` 已完成两条 Flash 样本的端到端 smoke：
+
+- PAI Job：`dlc1qjld6yy3gu92`，状态 `Succeeded`，总时长 853 秒，单卡。
+- OSS：`oss://leap-worldmodel-thailand/world-model/results/lynnreal-omni/dlc1qjld6yy3gu92/`。
+- `completed_samples=2`，两个唯一 ID、两个视频 SHA256，均为 1344×768、240 帧、24 fps、10 秒。
+- `source_changed_during_run=[]`；INT8 门禁 `fallback_shapes=0`；日志中无 PyTorch GEMM fallback 或 traceback。
+- 热态第一条样本 DiT 32.990 秒、decoder 1.762 秒、generation wall 35.440 秒，与官方 Flash 基线一致。
+- 第二条使用此前未见的 prompt row shape，首次 autotune 后 wall 为 69.940 秒；该开销进入持久化编译缓存，不代表模型重新加载。
+
+日志只出现一次 checkpoint shard 加载；当前批量脚本还会在 `summary.json` 显式记录 `model_loads=1`。后续相同运行时源码和相同 shape 会直接复用本次缓存。
+
+## 7. 不要踩的坑
 
 - 不要启用仓库 `_flash_3`：当前 FA3 是 Hopper 路径，B300 已验证的最佳配置是 native SDPA。
 - 不要绕过 `validate_int8_gemm.py`：它会阻止 Triton 编译失败后静默回退 `torch._int_mm`，否则速度和精度口径都会变化。
@@ -155,7 +170,7 @@ Job 运行中只有 `progress.jsonl`，成功收尾时才原子改名为 `result
 - 不要只看 PAI `Succeeded`。正式交付还必须检查 `READY`、样本数以及 `summary.json` 中 `source_changed_during_run=[]`。
 - 不要把 OSS 临时签名 URL、STS、ACR token 或个人 profile 写入仓库；提交器只在内存里取得临时凭证。
 
-## 7. 本次应该长期沉淀什么
+## 8. 本次应该长期沉淀什么
 
 应进入 Git 的内容：
 

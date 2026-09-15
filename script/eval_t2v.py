@@ -141,6 +141,8 @@ def main() -> None:
         "fps": 24,
         "warmups": args.warmups,
         "attention_backend": args.attention_backend,
+        "int8_gemm": "triton",
+        "vae_tiles": "adaptive",
         "output": str(args.output.resolve()),
     }
     if args.dry_run:
@@ -276,6 +278,9 @@ def main() -> None:
                 "video_sha256": sha256(video_path),
                 "variant": args.variant,
                 "precision": "W8A8",
+                "int8_gemm": "triton",
+                "attention_backend": args.attention_backend,
+                "vae_tiles": "adaptive",
                 "steps": steps,
                 "width": width,
                 "height": height,
@@ -308,6 +313,7 @@ def main() -> None:
         "light_vae": pipe.vae_record,
         "source": source,
         "source_changed_during_run": changed_sources(source),
+        "model_loads": 1,
         "completed_samples": len(results),
     }
     progress_path.replace(output / "results.jsonl")

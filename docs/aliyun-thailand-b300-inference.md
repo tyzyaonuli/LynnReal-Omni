@@ -61,7 +61,7 @@ B300 不能使用仓库 H100 `fixed` 路径写死的 FA3，因此使用官方 `-
 /cpfs/world-model/lynnreal-omni/
 ├── cache/env/py312-torch2121-cu130-lynnreal-0384eca3d5d7482d.tar.gz
 ├── cache/shared/{huggingface,pip}/
-├── cache/compiled/b300-torch2121-97fdcb871b28b3a2b2316b5d19a9ea8e61185570-44e0d680bad9991a/
+├── cache/compiled/  # 按模型源码、requirements 和 Diffusers 内容寻址
 ├── models/
 │   ├── standard-f1d6990e23496bef6c7d55bdcfe2925df2508325/
 │   ├── flash-9950cfc882b0e6b8600fbc49b58dc1d82d7a435b/
@@ -75,7 +75,7 @@ B300 不能使用仓库 H100 `fixed` 路径写死的 FA3，因此使用官方 `-
 - Flash：32 个对象，39,742,516,911 bytes
 - Light VAE：7 个对象，7,729,847,284 bytes
 
-每次任务只需从 CPFS 解压约束哈希对应的 Python overlay 到本地盘，并为权重建立轻量只读视图。权重不会再次下载，Triton/Inductor 编译缓存按 repo revision 和 kernel hash 持久化。Standard 的 `audio_scheduler`、`processor`、`scheduler`、`text_encoder`、`tokenizer` 与现有 H3 checkpoint 哈希相同，可硬链接复用；`audio_vae` 和 `vae` 使用本模型 revision 的官方文件。
+每次任务只需从 CPFS 解压约束哈希对应的 Python overlay 到本地盘，并为权重建立轻量只读视图。权重不会再次下载，Triton/Inductor 编译缓存按模型 Python 源码、`requirements.txt` 和固定 Diffusers 内容哈希持久化；只改文档或提交器不会产生无意义 cold start。Standard 的 `audio_scheduler`、`processor`、`scheduler`、`text_encoder`、`tokenizer` 与现有 H3 checkpoint 哈希相同，可硬链接复用；`audio_vae` 和 `vae` 使用本模型 revision 的官方文件。
 
 B300 启动探针选择 `_native_cudnn`，但完整 speed-test 搜索显示 native SDPA 略快，两模型最佳项均为 native SDPA。当前仓库 FA3 只支持 Hopper，不能在 Blackwell 上强制使用；BF16/FP16、head dim 64/96/128 的启动数值探针均已通过。
 

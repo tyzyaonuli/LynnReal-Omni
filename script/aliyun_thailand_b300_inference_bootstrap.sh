@@ -15,7 +15,19 @@ readonly OSS_RESULT_ROOT="/mnt/world-model/results/lynnreal-omni/${DLC_JOB_ID:-m
 readonly MODEL_ROOT="$PERSIST_ROOT/models"
 readonly SHARED_CACHE_ROOT="$PERSIST_ROOT/cache/shared"
 readonly KERNEL_SHA="$(sha256sum model/int8_gemm.py model/int8_tma.py | sha256sum | cut -c1-16)"
-readonly COMPILED_CACHE="$PERSIST_ROOT/cache/compiled/b300-torch2121-$RELEASE_SHA-$KERNEL_SHA"
+readonly DIFFUSERS_SHA="584a47eb49eaf60fda2843317708eacc6a7d9622f1630d9badb0b33fc480aaba"
+readonly RUNTIME_SOURCE_SHA="$({
+  find model -type f -name '*.py' -print0 | sort -z | xargs -0 sha256sum
+  sha256sum requirements.txt
+  printf '%s  %s\n' "$DIFFUSERS_SHA" vendor/diffusers-abc5e9bf71fd.tar.gz
+} | sha256sum | cut -c1-16)"
+readonly CONTENT_CACHE="$PERSIST_ROOT/cache/compiled/b300-torch2121-cu130-$RUNTIME_SOURCE_SHA"
+readonly VALIDATED_LEGACY_CACHE="$PERSIST_ROOT/cache/compiled/b300-torch2121-351f41e16ec29f9ae51b62ac5d531107e270e688-44e0d680bad9991a"
+if [[ "$RUNTIME_SOURCE_SHA" == "f6265ace1607fac9" && -d "$VALIDATED_LEGACY_CACHE" ]]; then
+  readonly COMPILED_CACHE="$VALIDATED_LEGACY_CACHE"
+else
+  readonly COMPILED_CACHE="$CONTENT_CACHE"
+fi
 readonly BASE_PYTHON="/opt/minwm/venv/bin/python"
 readonly OVERLAY_DIR="$LOCAL_ROOT/overlay"
 
@@ -297,6 +309,7 @@ printf '%s\n' \
   "flash_revision=$FLASH_REV" \
   "light_vae_revision=$LIGHT_VAE_REV" \
   "kernel_sha=$KERNEL_SHA" \
+  "runtime_source_sha=$RUNTIME_SOURCE_SHA" \
   "environment_archive=$overlay_archive" \
   "model_root=$MODEL_ROOT" \
   "compiled_cache=$COMPILED_CACHE" \
