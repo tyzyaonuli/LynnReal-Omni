@@ -21,7 +21,7 @@ def _persistent(A, B, SA, SB, Bias, C, M:tl.constexpr,N:tl.constexpr,K:tl.conste
         for ki in range(tl.cdiv(K,BK)):
             a=tl._experimental_descriptor_load(A,[mi*BM,ki*BK],[BM,BK],tl.int8)
             b=tl._experimental_descriptor_load(B,[ni*BN,ki*BK],[BN,BK],tl.int8)
-            acc=tl.dot(a,b.T,acc)
+            acc=tl.dot(a,b.T,acc,out_dtype=tl.int32)
         rows=mi.to(tl.int64)*BM+tl.arange(0,BM)
         cols=ni*BN+tl.arange(0,BN)
         value=acc.to(tl.float32)*tl.load(SA+rows,rows<M,other=0)[:,None]

@@ -37,7 +37,7 @@ def _gemm(A, B, AS, BS, Bias, C, M: tl.constexpr, N: tl.constexpr, K: tl.constex
                     (rows[:, None] < M) & (kk[None, :] < K), other=0)
         b = tl.load(B + kk[:, None] * B0 + cols[None, :] * B1,
                     (kk[:, None] < K) & (cols[None, :] < N), other=0)
-        acc = tl.dot(a, b, acc)
+        acc = tl.dot(a, b, acc, out_dtype=tl.int32)
     output = acc.to(tl.float32) * tl.load(AS + rows, rows < M, other=0)[:, None]
     output = output * tl.load(BS + cols, cols < N, other=0)[None, :]
     if HAS_BIAS:
