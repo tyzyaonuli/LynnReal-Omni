@@ -160,6 +160,16 @@ fork commit `351f41e16ec29f9ae51b62ac5d531107e270e688` 已完成两条 Flash 样
 
 日志只出现一次 checkpoint shard 加载；当前批量脚本还会在 `summary.json` 显式记录 `model_loads=1`。后续相同运行时源码和相同 shape 会直接复用本次缓存。
 
+当前 fork 主线 commit `296cdbe568f7cd3a3e0265d69f6b98e33b10f935` 又完成了一次跨 Job 缓存复用 smoke：
+
+- PAI Job：`dlc1nhwutmf4bo04`，状态 `Succeeded`，总时长 746 秒，单卡；OSS 结果位于 `oss://leap-worldmodel-thailand/world-model/results/lynnreal-omni/dlc1nhwutmf4bo04/`。
+- 两条 conditioning 都是 cache hit，耗时均记录为 0；`runtime.env` 的 `runtime_source_sha=f6265ace1607fac9`，并复用了首轮验证过的编译缓存。
+- warmup 从首轮 130.648 秒降到 83.201 秒；两条正式样本 wall 分别为 35.519 秒和 35.623 秒。第二条已从首次新 shape autotune 的 69.940 秒回到 Flash 热态基线。
+- `summary.json` 明确记录 `status=passed`、`samples=2`、`model_loads=1`、`int8_gemm=triton`、`attention_backend=native`、`vae_tiles=adaptive`、`source_changed_during_run=[]`。
+- 根目录与 `eval/` 的 `READY` 均存在，OSS 共 19 个预期对象；日志无 traceback、INT8 unavailable 或 PyTorch GEMM fallback。
+
+这次 Job 的 pipeline load 为 338.958 秒，说明 CPFS 权重读取仍会受节点和存储热度影响。持久化方案保证不重新下载约 125 GB 权重、不重新安装环境，并能复用 conditioning/编译缓存，但不应把完整 Job cold start 承诺成固定时长；评测排期应为模型加载保留余量。
+
 ## 7. 不要踩的坑
 
 - 不要启用仓库 `_flash_3`：当前 FA3 是 Hopper 路径，B300 已验证的最佳配置是 native SDPA。
