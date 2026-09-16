@@ -128,6 +128,14 @@ class H3VaeABTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Manifest/result mismatch"):
                 build(Path(out), manifest_path)
             self.assertIn('\\u003c/script>', (Path(out) / "player.html").read_text(encoding="utf-8"))
+            tae = dict(record, status='complete', width=1344, height=768, frames=124, fps=24)
+            (folder / 'tae.json').write_text(json.dumps(tae))
+            build(Path(out), media_base='https://example.com/', tae_results=Path(out))
+            self.assertIn('https://example.com/case1/tae-web.mp4', (Path(out)/'player.html').read_text(encoding='utf-8'))
+            self.assertNotIn('__SOURCE_NOTE__', (Path(out)/'player.html').read_text(encoding='utf-8'))
+            (folder / 'tae.json').write_text(json.dumps(dict(tae, latent_sha256='wrong')))
+            with self.assertRaisesRegex(ValueError, 'TAE input/audio mismatch'):
+                build(Path(out), tae_results=Path(out))
             for key in ("latent_sha256", "audio_sha256", "decoded_audio_sha256"):
                 (folder / "light.json").write_text(json.dumps(dict(record, **{key: "different"})))
                 with self.assertRaises(ValueError):
