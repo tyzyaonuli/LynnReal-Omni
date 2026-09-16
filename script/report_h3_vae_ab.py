@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 
-def build(results, manifest_path=None, media_base=None):
+def build(results, manifest_path=None, media_base=None, tae_reference=None):
     cases = []
     manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path else None
     expected = {c["id"]: c for c in manifest["cases"]} if manifest else None
@@ -31,6 +31,27 @@ def build(results, manifest_path=None, media_base=None):
         order = {key: index for index, key in enumerate(expected)}
         cases.sort(key=lambda case: order[case["id"]])
     displayed = [dict(c, a=media_base.rstrip('/') + '/' + c['a'], b=media_base.rstrip('/') + '/' + c['b']) for c in cases] if media_base else cases
+    if tae_reference:
+        reference = json.loads(Path(tae_reference).read_text(encoding='utf-8-sig'))
+        refs = {c['id']: c for c in reference['cases']}
+        if len(refs) != len(reference['cases']) or set(refs) != {c['id'] for c in cases}:
+            raise ValueError('TAE case IDs mismatch')
+        for case in displayed:
+            ref = refs[case['id']]
+            media = ref['b']['media']
+            if (ref['prompt'], ref['seed']) != (case['prompt'], case['seed']):
+                raise ValueError('TAE prompt/seed mismatch')
+            if (media['width'], media['height'], media['frames'], media['fps']) != (1344, 768, 124, '24/1'):
+                raise ValueError('TAE geometry mismatch')
+            expected = f"videos/{case['id']}-b-taehv.mp4"
+            if ref['b']['src'] != expected:
+                raise ValueError('Unexpected TAE video path')
+            case['c'] = 'https://minimax-h3-taehv-ab-public-20260904-b67d9f.s3.us-west-2.amazonaws.com/' + expected
+        template = (Path(__file__).parent / 'h3_vae_blind_player.html').read_text(encoding='utf-8')
+        data = json.dumps(displayed, ensure_ascii=False).replace('<', '\\u003c')
+        (results / 'player.html').write_text(template.replace('__DATA__', data), encoding='utf-8')
+        (results / 'report.json').write_text(json.dumps(cases, ensure_ascii=False, indent=2), encoding='utf-8')
+        return cases
     data = json.dumps(displayed, ensure_ascii=False).replace("<", "\\u003c")
     template = '''<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>H3 Default VAE / LynnReal Light VAE</title><style>

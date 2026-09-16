@@ -148,6 +148,20 @@ HTML also works. Use `--publish --html-only` to refresh it without copying video
 The report JSON retains relative paths for portable regeneration. The publisher
 requires the per-case JSON records beside `report.json` to rebuild the page.
 
+For the three-column blind player, add
+`--tae-reference eval/h3_vae_ab/tae-reference.json --html-only --publish` to the
+publication command. This validates historical TAE case IDs, prompts, seeds and
+geometry, and embeds its absolute public S3 video URLs. It does not assert shared
+latents between the historical AWS run and this B300 run. The strict current A/B
+report JSON is retained; the historical lane is presentation-only.
+
+Each case independently shuffles the three lanes on page open and retains that
+order when revisited. Names, per-lane metrics and identifying source notes start
+hidden. Reveal/hide controls do not change the order; navigating resets reveal.
+The reshuffle button changes the current case's order and hides identities again.
+Audio selection uses screen positions, with all lanes initially muted. This is
+casual visual blinding, not tamper-proof concealment from browser source inspection.
+
 ## Controlled application-cache cold/warm comparison
 
 Use a unique namespace and one committed revision for both halves. This measures

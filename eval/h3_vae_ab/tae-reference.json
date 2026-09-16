@@ -1,0 +1,429 @@
+{
+  "title": "MiniMax H3 VAE Decoder A/B",
+  "pairing": "Same prompt, seed, NFE, model revision, and request geometry; only the visual VAE decoder changes.",
+  "taehv_ref": "011dfc2112197741c540e0bdd5b7b67bcc930771",
+  "taehv_checkpoint_sha256": "af92965c2d7986a89a757e7cccd26f9eeeff0c3f0d5495eb168aeb2d6d9be9ba",
+  "cases": [
+    {
+      "id": "01-rally-drift",
+      "category": "高动态",
+      "title": "雨夜拉力漂移",
+      "seed": 41001,
+      "prompt": "A low tracking shot follows a rally car drifting through a wet mountain hairpin at night, tires throwing dense spray and gravel toward the camera, rapid counter-steering, suspension compression, bright headlights reflecting across the road, physically coherent high-speed motion, cinematic realism, synchronized engine revs and tire noise.",
+      "decoded_audio_sha256": "3b8c2d42dc94021b4c810cfcf435bc849e1614163ae2cd5dd5081565e23093a1",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/01-rally-drift-a-exact.mp4",
+        "sha256": "c0601e74103e43b0d2dc868418d48fbe20eeeafb8c7fe8f3404cfc4c11a16dd1",
+        "latency_s": 6.854151884999965,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/01-rally-drift-b-taehv.mp4",
+        "sha256": "1983a7eeaa9978022104d1df9cefbe5e4a917f96e5a958f0e58719ef83355d99",
+        "latency_s": 6.253970632000119,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    },
+    {
+      "id": "02-motocross-jump",
+      "category": "高动态",
+      "title": "越野摩托飞跃",
+      "seed": 41002,
+      "prompt": "A motocross rider launches over a dirt ramp in a packed stadium, the camera pans quickly alongside the bike, spinning wheels and individual dirt particles remain sharp, the rider lands hard and accelerates away, dramatic arena lights, realistic physics, synchronized engine and crowd audio.",
+      "decoded_audio_sha256": "c42b2d767f35a12c6feec6e5afe0551c2306a65ce79f5bf4fd92176324e37c00",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/02-motocross-jump-a-exact.mp4",
+        "sha256": "7b8e70a75951ea68bcb7517bae2d8c8329f57906bba21605b7e6922498c0fd2f",
+        "latency_s": 7.046347477999916,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/02-motocross-jump-b-taehv.mp4",
+        "sha256": "7b4c3677ec2ead8c00c402812e2fea8484deb8d2282d13301805ad76649e08dd",
+        "latency_s": 6.24498331399991,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    },
+    {
+      "id": "03-parkour-chase",
+      "category": "人物运动",
+      "title": "屋顶跑酷追逐",
+      "seed": 41003,
+      "prompt": "A handheld rooftop parkour chase at golden hour, an athlete sprints, vaults a railing, jumps a narrow alley, rolls on landing and keeps running while the camera follows closely, natural articulated body motion, stable face and clothing details, strong parallax, realistic city ambience and footsteps.",
+      "decoded_audio_sha256": "05303c4f4e8d252480b922b8b454c573dbe8dd50bd04b5b9e1de85368ed127d0",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/03-parkour-chase-a-exact.mp4",
+        "sha256": "4b98b0198a157b3a0a361175e7d2cb4fa9b4e81db052dd5b45e87ce6f85626d4",
+        "latency_s": 7.043868520999922,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/03-parkour-chase-b-taehv.mp4",
+        "sha256": "21ffde37128c960993304b3b0a06de3534309632b30e0f8cd6b59cab7c83f34a",
+        "latency_s": 6.046433679000074,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    },
+    {
+      "id": "04-fpv-canyon",
+      "category": "镜头运动",
+      "title": "峡谷 FPV 穿越",
+      "seed": 41004,
+      "prompt": "An FPV drone races through a narrow red-rock canyon, banks around pillars, dives beneath a natural stone arch and skims above a reflective river, continuous aggressive camera rotation, strong depth and parallax, crisp rock texture, realistic wind rush and distant water.",
+      "decoded_audio_sha256": "85a5737828e4e41341b2ef6756bb78920fa914df086ca276e784136b53ad320f",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/04-fpv-canyon-a-exact.mp4",
+        "sha256": "7f51fa0dc05f36a9dd7b19a2c8e0572571406b549980021f771798796c98e6e1",
+        "latency_s": 6.860580262999974,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/04-fpv-canyon-b-taehv.mp4",
+        "sha256": "496355b093053db5e58e3335f859749adceb0e92779b02c9575dd27d232d0e50",
+        "latency_s": 6.041847052999856,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    },
+    {
+      "id": "05-storm-lighthouse",
+      "category": "流体与光照",
+      "title": "风暴灯塔巨浪",
+      "seed": 41005,
+      "prompt": "A violent ocean storm surrounds a lighthouse at dusk, a huge wave crashes against black rocks and explodes into fine spray as the lighthouse beam sweeps through rain and mist, complex moving water, foam and translucent droplets, stable architecture, thunder and roaring surf.",
+      "decoded_audio_sha256": "e87fa0044334f3129a339ea1d2d4b2e9b386cedc54ff7bdc5e6e653540ad8f99",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/05-storm-lighthouse-a-exact.mp4",
+        "sha256": "a8eac31428579f6445a018583ce6fdaa305730d9b3829b95635a0165b41784d9",
+        "latency_s": 6.862853678999954,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/05-storm-lighthouse-b-taehv.mp4",
+        "sha256": "a84620d535f96dd3b6d8ff95cd235dd4614ad4aa5a8dd71613a9ee4c74c71416",
+        "latency_s": 6.058423609999863,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    },
+    {
+      "id": "06-silk-dance",
+      "category": "细节稳定性",
+      "title": "丝绸与彩纸舞蹈",
+      "seed": 41006,
+      "prompt": "A dancer performs a rapid spin on a dark theater stage while long red silk ribbons and hundreds of metallic confetti pieces spiral through moving spotlights, flowing fabric keeps fine folds and edges, coherent limbs and face, smooth orbiting camera, synchronized music and fabric movement.",
+      "decoded_audio_sha256": "1264670fef102b464380a05ea5fb57523e73faf3cfd311c7f85a8a1fb8852f92",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/06-silk-dance-a-exact.mp4",
+        "sha256": "c59f814a089a28fd6c20595b94c75f2f043e4095fac2407cd989eb0d020a318e",
+        "latency_s": 7.070482234999872,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/06-silk-dance-b-taehv.mp4",
+        "sha256": "f73643e01eeecb6e51e9a14063eba3586444294c127f4062c015e36fe4e4a9c6",
+        "latency_s": 6.251267888000029,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    },
+    {
+      "id": "07-neon-fps",
+      "category": "游戏",
+      "title": "霓虹 FPS 冲刺",
+      "seed": 41007,
+      "prompt": "Stylized high-end first-person science-fiction game footage: the player sprints and slides through a neon industrial corridor, fires a plasma weapon at agile robots, bright particles and muzzle flashes illuminate a detailed weapon and readable minimal HUD, fast mouse-like camera turns, coherent gameplay motion and game sound effects.",
+      "decoded_audio_sha256": "a727b52d42c24dc659bd59320bc8d70dbe23e3223affb4b7ac3ad16ba4498b86",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/07-neon-fps-a-exact.mp4",
+        "sha256": "22047ad23fd4767e3293ea5e6439889dcc4bccb5d17125b60428f96cddc12377",
+        "latency_s": 7.27834833299994,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/07-neon-fps-b-taehv.mp4",
+        "sha256": "418848a6866c4602a4f98c31da11e9abd94414596dafa156c8a3e0698e30e988",
+        "latency_s": 6.249866505,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    },
+    {
+      "id": "08-hover-racing",
+      "category": "游戏",
+      "title": "未来悬浮赛车",
+      "seed": 41008,
+      "prompt": "Third-person futuristic racing game footage follows a sleek hover car at extreme speed through a rain-soaked cyberpunk city, overtaking rivals, scraping a barrier and throwing sparks, sharp road markings and signs, stable chase camera, strong motion and reflections, synchronized racing audio.",
+      "decoded_audio_sha256": "219b9b7b66d4a3f50f8dc3bda8431f9a5e688ed853480d0ba8e2b81105e93f02",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/08-hover-racing-a-exact.mp4",
+        "sha256": "1601e0dd2a3cacfd28fa5b1ec54ffbcd4f4f9e897af18116243e1899f7ba5ff2",
+        "latency_s": 6.856600158999981,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/08-hover-racing-b-taehv.mp4",
+        "sha256": "6d025baefefcb6a7949332f0b7946aed795602b17f3b81cf83bff68146c7a502",
+        "latency_s": 6.236815046999936,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    },
+    {
+      "id": "09-voxel-builder",
+      "category": "游戏",
+      "title": "体素世界搭桥",
+      "seed": 41009,
+      "prompt": "Colorful voxel sandbox game footage in third person: a blocky explorer runs across a forest clearing, rapidly places a sequence of cubes to build a bridge over a stream, crosses it and turns toward a distant castle, crisp geometric edges, consistent grid structure, smooth game camera and cheerful ambient audio.",
+      "decoded_audio_sha256": "93ff8047672bc1015dc4291a61b3e32770bfc15157a2c7a9afd16657cb6d6eab",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/09-voxel-builder-a-exact.mp4",
+        "sha256": "1e5ded59df4e5b05a6c9d73d4bfa16629ad063fa3c7a635fa0b13630d706cb51",
+        "latency_s": 6.87220260800018,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/09-voxel-builder-b-taehv.mp4",
+        "sha256": "e850715253c5cd6f1a4f7b66cd569ecb8c0ffea3e6b67f159d3bfbe7e93af5a3",
+        "latency_s": 6.2355874359998325,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    },
+    {
+      "id": "10-dragon-chase",
+      "category": "复杂运动",
+      "title": "飞龙空中追逐",
+      "seed": 41010,
+      "prompt": "A cinematic aerial chase between two dragons weaving around snow-covered mountain peaks, the lead dragon beats its wings, folds them into a steep dive through clouds, then pulls up above a frozen lake, detailed scales remain stable during fast motion, sweeping camera, volumetric light, wind and wing audio.",
+      "decoded_audio_sha256": "267157d6a0fe7b38eb79d38c36fc53f18d9a36bc711e2a55be6fca4cd526f891",
+      "a": {
+        "label": "A · H3 Full VAE",
+        "src": "videos/10-dragon-chase-a-exact.mp4",
+        "sha256": "108005e649ffc4ae48a662386788e43751627ce46f7536c6cbd530585c801204",
+        "latency_s": 7.06216762300005,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      },
+      "b": {
+        "label": "B · TAEHV taeh3",
+        "src": "videos/10-dragon-chase-b-taehv.mp4",
+        "sha256": "9663cfd335c47feb3cf1e57e052a957dc2a10c3ba85ecf3fd193427af257004b",
+        "latency_s": 6.243320219999987,
+        "media": {
+          "video_codec": "h264",
+          "width": 1344,
+          "height": 768,
+          "frames": 124,
+          "fps": "24/1",
+          "audio_codec": "aac",
+          "audio_sample_rate": 32000,
+          "audio_channels": 2,
+          "duration_s": 5.175
+        }
+      }
+    }
+  ]
+}
+
