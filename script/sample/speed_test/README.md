@@ -24,6 +24,10 @@ backends and decoder tiling with fused Triton INT8 GEMM; the default
 `--search full` additionally measures Torch INT8 GEMM. No refinement pass
 is used in either speed test.
 
+The Shanghai PAI single-H100 wrappers, shared-cache layout, lifecycle checks,
+and browser-safe video publishing procedure are documented in
+[`docs/aliyun-shanghai-h100.md`](../../../docs/aliyun-shanghai-h100.md).
+
 For duration scaling with the previously selected configuration, use
 `--resolution 768p --frames 240 --search fixed` (10 seconds) or
 `--frames 360` (15 seconds). `fixed` requires FA3 and Triton fusion and
