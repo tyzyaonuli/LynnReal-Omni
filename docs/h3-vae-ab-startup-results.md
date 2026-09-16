@@ -60,7 +60,13 @@ The cold job's final `cp` to the OSS mount failed to close
 timings, summary, case records and bootstrap timestamps were recovered from OSS.
 This post-measurement failure does not invalidate the recorded time to first
 result, but the cold cloud job must remain labelled Failed and its upload must
-not be claimed complete. Recovery of the missing artifact is tracked separately.
+not be claimed complete at original job exit. The missing artifact was repaired
+afterward without GPU: the successful warm run's 14,376,549-byte warmup latent
+was downloaded and its SHA256 checked against the identical cold/warm latent
+receipts (`9aabb71cb2380b3123bc17730b08fafda2b4934662a8065db5fc5d00d24e7534`).
+An OSS server-side copy restored the missing cold object, with matching size,
+ETag and CRC64. `upload-repair.json` beside the cold job results records this
+provenance. The original PAI Failed status remains unchanged.
 
 GPU evidence is under
 `oss://leap-worldmodel-thailand/world-model/results/lynnreal-omni/<job-id>/`.
