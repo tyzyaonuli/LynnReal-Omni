@@ -11,12 +11,38 @@ import hashlib
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "script"))
 import prepare_h3_startup_cache as startup
+from check_h3_retry import check as retry_check
 from eval_h3_vae_ab import resolve, completed_variant, sha256
 from report_h3_vae_ab import build
 from publish_h3_vae_ab import publication_files
 
 
 class H3VaeABTests(unittest.TestCase):
+    def test_retry_check_preserves_original_and_requires_regeneration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            job = Path(directory) / 'dlcnew'
+            root = job / 'eval'
+            case = root / 'case01'
+            case.mkdir(parents=True)
+            (job / 'resumed-from-job.txt').write_text('dlcold')
+            (root / 'run.json').write_text(json.dumps({'case_ids': ['case01']}))
+            target = case / 'light-web.mp4'
+            target.write_bytes(b'video')
+            (case / 'baseline.json').write_text('{}')
+            result = case / 'light.json'
+            result.write_text(json.dumps({'status': 'complete', 'job_id': 'dlcold'}))
+            retry_check(root, 'case01', 'prepare')
+            self.assertFalse(target.exists())
+            self.assertEqual((job / 'injected-light-web.mp4').read_bytes(), b'video')
+            with self.assertRaises(FileNotFoundError):
+                retry_check(root, 'case01', 'verify')
+            target.write_bytes(b'video')
+            with self.assertRaises(AssertionError):
+                retry_check(root, 'case01', 'verify')
+            result.write_text(json.dumps({'status': 'complete', 'job_id': 'dlcnew'}))
+            retry_check(root, 'case01', 'verify')
+            self.assertEqual(json.loads((job / 'retry-acceptance.json').read_text())['status'], 'passed')
+
     def test_cold_cache_isolated_and_warm_reuses_verified_files(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

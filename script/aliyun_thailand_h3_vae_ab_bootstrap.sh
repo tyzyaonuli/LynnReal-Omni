@@ -85,9 +85,16 @@ if [[ -n "${LYNNREAL_H3_RESUME_JOB:-}" ]]; then
   printf '%s\n' "$LYNNREAL_H3_RESUME_JOB" > "$RESULT/resumed-from-job.txt"
 fi
 args=(--h3 "$H3" --light-vae "$LIGHT" --output "$RESULT/eval" --variant "${LYNNREAL_H3_VARIANT:-both}")
+if [[ "${LYNNREAL_H3_RETRY_CHECK:-0}" == 1 ]]; then
+  test -n "${LYNNREAL_H3_RESUME_JOB:-}"
+  "$PYTHON" script/check_h3_retry.py prepare --results "$RESULT/eval" --case "$LYNNREAL_H3_CASE"
+fi
 [[ -z "${LYNNREAL_H3_CASE:-}" ]] || args+=(--case "$LYNNREAL_H3_CASE")
 "$PYTHON" -u script/eval_h3_vae_ab.py "${args[@]}" --preflight
 "$PYTHON" -u script/eval_h3_vae_ab.py "${args[@]}"
+if [[ "${LYNNREAL_H3_RETRY_CHECK:-0}" == 1 ]]; then
+  "$PYTHON" script/check_h3_retry.py verify --results "$RESULT/eval" --case "$LYNNREAL_H3_CASE"
+fi
 if [[ "${LYNNREAL_H3_VARIANT:-both}" == both ]]; then
   "$PYTHON" script/report_h3_vae_ab.py --results "$RESULT/eval"
 fi

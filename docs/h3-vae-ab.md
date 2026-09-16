@@ -76,6 +76,16 @@ failures are appended to `failures.json` with stage, error, time and job ID.
 Do not resume from a job that is still writing results. Runtime code changes
 require a fresh run; a resume is not a way to mix implementations in one comparison.
 
+For an explicit missing-output recovery acceptance check, add `--retry-check`
+to a resume command with `--case` and both variants. After copying the original
+results into the new job, this moves only the selected Light preview into a
+separate evidence file. The normal runner must regenerate it. A receipt checks
+that all saved tensor/video hashes are restored, other per-case JSON records
+remain unchanged, and the regenerated Light record identifies the new job.
+The original job is never modified. This tests missing-output recovery, not an
+injected CUDA crash. Runtime model/runner source must still match the prior job;
+the orchestration-only acceptance helper does not change that identity.
+
 ## Acceptance evidence (required before calling the evaluation complete)
 
 - Run the committed repository entry for both smoke and ten-case evaluation;

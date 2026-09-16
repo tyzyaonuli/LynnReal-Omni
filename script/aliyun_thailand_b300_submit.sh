@@ -32,6 +32,7 @@ H3_RUNTIME_RECEIPT=""
 H3_STARTUP_RECEIPT=""
 H3_RESUME_JOB=""
 H3_VARIANT="both"
+H3_RETRY_CHECK="0"
 
 while (($#)); do
   case "$1" in
@@ -48,6 +49,7 @@ while (($#)); do
     --h3-vae-ab) RUN_MODE="h3-vae-ab"; shift ;;
     --case) H3_CASE="${2:?--case requires an ID}"; shift 2 ;;
     --resume-job) H3_RESUME_JOB="${2:?--resume-job requires a previous job ID}"; shift 2 ;;
+    --retry-check) H3_RETRY_CHECK="1"; shift ;;
     --h3-variant) H3_VARIANT="${2:?--h3-variant requires baseline, light or both}"; shift 2 ;;
     --preflight-receipt) H3_PREFLIGHT="${2:?--preflight-receipt requires a JSON path}"; shift 2 ;;
     --runtime-receipt) H3_RUNTIME_RECEIPT="${2:?--runtime-receipt requires a JSON path}"; shift 2 ;;
@@ -57,7 +59,7 @@ while (($#)); do
 Usage:
   bash script/aliyun_thailand_b300_submit.sh [--dry-run|--submit] --h3-vae-ab \
     --preflight-receipt weights.json --runtime-receipt runtime.json \
-    [--case CASE_ID] [--h3-variant baseline|light|both] [--resume-job JOB_ID]
+    [--case CASE_ID] [--h3-variant baseline|light|both] [--resume-job JOB_ID] [--retry-check]
   bash script/aliyun_thailand_b300_submit.sh [--dry-run|--submit]
   bash script/aliyun_thailand_b300_submit.sh [--dry-run|--submit] \
     --eval-manifest prompts.jsonl --variant standard|flash
@@ -91,6 +93,9 @@ for command in aliyun curl git jq python3 sha256sum tar; do
   }
 done
 if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
+  if [[ "$H3_RETRY_CHECK" == 1 ]]; then
+    [[ -n "$H3_RESUME_JOB" && -n "$H3_CASE" && "$H3_VARIANT" == both ]] || { echo "retry check requires resume job, case and both variants" >&2; exit 2; }
+  fi
   [[ "$H3_VARIANT" =~ ^(baseline|light|both)$ ]] || { echo "invalid H3 variant" >&2; exit 2; }
   [[ -z "$H3_RESUME_JOB" || "$H3_RESUME_JOB" =~ ^dlc[a-z0-9]+$ ]] || { echo "invalid resume job ID" >&2; exit 2; }
   [[ -n "$H3_PREFLIGHT" ]] || { echo "H3 A/B requires a completed CPU preflight receipt" >&2; exit 2; }
@@ -171,7 +176,7 @@ fi
 user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_RUN_MODE=$RUN_MODE; $eval_exports exec bash script/aliyun_thailand_b300_inference_bootstrap.sh"
 if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
   [[ "$H3_CASE" =~ ^[a-z0-9-]*$ ]] || { echo "invalid H3 case ID" >&2; exit 2; }
-  user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_H3_CASE=$H3_CASE LYNNREAL_H3_VARIANT=$H3_VARIANT LYNNREAL_H3_RESUME_JOB=$H3_RESUME_JOB; exec bash $bootstrap"
+  user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_H3_CASE=$H3_CASE LYNNREAL_H3_VARIANT=$H3_VARIANT LYNNREAL_H3_RESUME_JOB=$H3_RESUME_JOB LYNNREAL_H3_RETRY_CHECK=$H3_RETRY_CHECK; exec bash $bootstrap"
 fi
 
 registry="${IMAGE%%/*}"
