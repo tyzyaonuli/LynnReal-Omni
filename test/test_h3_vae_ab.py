@@ -10,9 +10,18 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "script"))
 from eval_h3_vae_ab import resolve, completed_variant, sha256
 from report_h3_vae_ab import build
+from publish_h3_vae_ab import publication_files
 
 
 class H3VaeABTests(unittest.TestCase):
+    def test_publication_only_selects_player_and_previews(self):
+        report = [{"id": f"case-{i}", "a": f"case-{i}/baseline-web.mp4",
+                   "b": f"case-{i}/light-web.mp4"} for i in range(10)]
+        self.assertEqual(len(publication_files(report)), 21)
+        report[0]["a"] = "../latents.pt"
+        with self.assertRaises(ValueError):
+            publication_files(report)
+
     def test_resume_rejects_missing_or_corrupt_outputs(self):
         with tempfile.TemporaryDirectory() as out:
             folder = Path(out)

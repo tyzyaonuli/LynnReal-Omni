@@ -1,0 +1,53 @@
+"""Publish only the static player and its browser videos to an isolated OSS prefix."""
+import argparse
+import json
+from pathlib import Path
+import re
+import subprocess
+
+
+def publication_files(report):
+    files = ["player.html"]
+    for case in report:
+        case_id = case["id"]
+        if not re.fullmatch(r"[a-z0-9-]+", case_id):
+            raise ValueError("Invalid case ID")
+        for key, variant in (("a", "baseline"), ("b", "light")):
+            expected = f"{case_id}/{variant}-web.mp4"
+            if case[key] != expected:
+                raise ValueError("Unexpected preview path")
+            files.append(expected)
+    if len(set(files)) != len(files) or len(files) != 21:
+        raise ValueError("Publication requires exactly ten distinct A/B pairs")
+    return files
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--job-id", required=True)
+    parser.add_argument("--profile", default="shengdong")
+    parser.add_argument("--publish", action="store_true", help="Default only prints the exact publication plan")
+    args = parser.parse_args()
+    if not re.fullmatch(r"dlc[a-z0-9]+", args.job_id):
+        raise ValueError("Invalid job ID")
+    files = publication_files(json.loads(args.report.read_text(encoding="utf-8")))
+    bucket = "leap-worldmodel-thailand"
+    source = f"oss://{bucket}/world-model/results/lynnreal-omni/{args.job_id}/eval/"
+    prefix = f"world-model/public/lynnreal-h3-vae-ab/{args.job_id}/"
+    target = f"oss://{bucket}/{prefix}"
+    print(json.dumps({"source": source, "target": target, "files": files, "publish": args.publish}, indent=2), flush=True)
+    if not args.publish:
+        return
+    def oss(*command):
+        subprocess.run(["aliyun", "--profile", args.profile, "oss", *command,
+                        "--region", "ap-southeast-7", "--endpoint", "oss-ap-southeast-7.aliyuncs.com"], check=True)
+    # Copy and publish the videos first, then the player. Never change bucket ACL.
+    for name in files[1:] + files[:1]:
+        oss("cp", source + name, target + name, "--force")
+        oss("set-acl", target + name, "public-read", "--force")
+    print(f"https://{bucket}.oss-ap-southeast-7.aliyuncs.com/{prefix}player.html")
+
+
+if __name__ == "__main__":
+    main()

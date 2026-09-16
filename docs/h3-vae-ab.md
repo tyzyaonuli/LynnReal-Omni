@@ -121,3 +121,15 @@ python script/report_h3_vae_ab.py --results /path/to/results/eval
 
 The HTML references only adjacent preview videos. Quality judgments require
 watching the paired clips; pixel differences alone are not a quality verdict.
+
+Publish exactly the player and twenty browser previews to an isolated public
+prefix (model metadata, latents and full result directories stay private):
+
+```bash
+python script/publish_h3_vae_ab.py --report /path/to/results/eval/report.json --job-id <dlc-job-id>
+# Inspect the printed object list, then run the same command with --publish.
+```
+
+This uses server-side OSS copies and per-object public-read ACLs, never a bucket
+ACL change. Verify anonymous HTTP access and browser rendering after publication;
+an OSS endpoint that forces HTML downloads needs an existing custom domain.
