@@ -8,7 +8,11 @@ PROFILE="${ALIYUN_PROFILE:-shengdong}"
 MODE="${1:-}"
 ACTION="${2:---dry-run}"
 MODEL_SET="${3:-lynnreal}"
-[[ "$MODEL_SET" == "lynnreal" || "$MODEL_SET" == "--h3-fl2va" ]] || { echo "invalid model selection" >&2; exit 2; }
+[[ "$MODEL_SET" == "lynnreal" || "$MODEL_SET" == "--h3-fl2va" || "$MODEL_SET" == "--h3-startup" ]] || { echo "invalid model selection" >&2; exit 2; }
+if [[ "$MODEL_SET" == "--h3-startup" ]]; then
+  [[ "$MODE" == --sync && "${H3_STARTUP_MODE:-}" =~ ^(cold|warm)$ && "${H3_STARTUP_EXPERIMENT:-}" =~ ^[a-z0-9-]+$ ]] || { echo "startup requires --sync and H3_STARTUP_MODE/EXPERIMENT" >&2; exit 2; }
+  git diff --quiet && git diff --cached --quiet || { echo "commit startup code first" >&2; exit 2; }
+fi
 PAI_SESSION_ID="${PAI_SESSION_ID:-$(date +%s)-$RANDOM}"
 USER_AGENT="${PAI_USER_AGENT:-AlibabaCloud-Agent-Skills/alibabacloud-pai-dlc-job/$PAI_SESSION_ID}"
 THAILAND_REGION="ap-southeast-7"
@@ -37,6 +41,10 @@ if [[ "$MODEL_SET" == "--h3-fl2va" ]]; then
   bundle_hash="h3-fl2va-$({ sha256sum "$stage_script" "$downloader" "$sync_script" script/prepare_h3_vae_ab.py; find eval/h3_vae_ab -type f -print0 | sort -z | xargs -0 sha256sum; } | sha256sum | cut -c1-12)"
 fi
 bundle_name="model-cache-$bundle_hash.tar.gz"
+if [[ "$MODEL_SET" == "--h3-startup" ]]; then
+  bundle_hash="h3-startup-$(git rev-parse --short=12 HEAD)"
+  bundle_name="model-cache-$bundle_hash.tar.gz"
+fi
 bundle_uri="$THAILAND_OSS_CLI/code/lynnreal-omni/$bundle_name"
 
 account_id="$(aliyun --profile "$PROFILE" --connect-timeout 15 --read-timeout 30 \
@@ -67,12 +75,19 @@ else
   fi
 fi
 
+if [[ "$MODEL_SET" == "--h3-startup" ]]; then
+  job_name="h3-startup-$H3_STARTUP_EXPERIMENT-$H3_STARTUP_MODE"
+  user_command="set -euo pipefail; mkdir -p /workspace/lynnreal-model-cache; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_name -C /workspace/lynnreal-model-cache; cd /workspace/lynnreal-model-cache; export LYNNREAL_RELEASE_SHA=$(git rev-parse HEAD); python script/prepare_h3_startup_cache.py --experiment $H3_STARTUP_EXPERIMENT --mode $H3_STARTUP_MODE --output /mnt/world-model/results/lynnreal-omni/$job_name"
+fi
+
 if [[ "$ACTION" == "--submit" ]]; then
   bundle_dir="$(mktemp -d)"
   trap 'rm -rf "$bundle_dir"' EXIT
   mkdir -p "$bundle_dir/source/script" "$bundle_dir/source/vendor"
   cp "$stage_script" "$sync_script" "$downloader" "$bundle_dir/source/script/"
-  if [[ "$MODEL_SET" == "--h3-fl2va" ]]; then
+  if [[ "$MODEL_SET" == "--h3-startup" ]]; then
+    cp script/prepare_h3_startup_cache.py "$bundle_dir/source/script/"
+  elif [[ "$MODEL_SET" == "--h3-fl2va" ]]; then
     cp -a eval/h3_vae_ab/staging/. "$bundle_dir/source/vendor/"
     cp script/prepare_h3_vae_ab.py "$bundle_dir/source/script/"
     mkdir -p "$bundle_dir/source/eval"

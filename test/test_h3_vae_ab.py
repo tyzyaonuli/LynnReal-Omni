@@ -5,15 +5,48 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+import hashlib
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "script"))
+import prepare_h3_startup_cache as startup
 from eval_h3_vae_ab import resolve, completed_variant, sha256
 from report_h3_vae_ab import build
 from publish_h3_vae_ab import publication_files
 
 
 class H3VaeABTests(unittest.TestCase):
+    def test_cold_cache_isolated_and_warm_reuses_verified_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / 'env/cache.tar.gz'
+            archive.parent.mkdir()
+            archive.write_bytes(b'environment')
+            (archive.parent / 'h3-vae-ab-env-ready.json').write_text(json.dumps({'archive_sha256': startup.digest(archive)}))
+            for name in ('h3-bfc8ed0353f5a9733be73e6b2c98ec0948195b86', 'light-vae-e453444c1a52b73a0c5eb0023d208c473c2bb26a'):
+                folder = root / 'models' / name
+                folder.mkdir(parents=True)
+                (folder / 'weights').write_bytes(b'abc')
+                (folder / 'H3_VAE_AB_READY.json').write_text(json.dumps({'complete': True, 'files': [{'path': 'weights', 'size': 3, 'sha256': hashlib.sha256(b'abc').hexdigest(), 'verified': True}]}))
+            def extract(command, **unused):
+                overlay = Path(command[-1]) / 'overlay'
+                overlay.mkdir()
+                (overlay / 'package.py').write_text('pass')
+            with patch.object(startup, 'PERSIST', root), patch.object(startup, 'ARCHIVE', archive), patch.object(startup.subprocess, 'run', side_effect=extract):
+                for mode in ('cold', 'warm'):
+                    with patch.object(sys, 'argv', ['prepare', '--experiment', 'test', '--mode', mode, '--output', str(root / mode)]):
+                        startup.main()
+                cold = json.loads((root / 'cold/startup-cache.json').read_text())
+                warm = json.loads((root / 'warm/startup-cache.json').read_text())
+                self.assertEqual(cold['copied_bytes'], 6)
+                self.assertEqual(warm['copied_bytes'], 0)
+                self.assertEqual(cold['archive_sha256'], warm['archive_sha256'])
+                self.assertEqual((root / 'cache/startup-ab/test/h3/weights').read_bytes(), b'abc')
+                with patch.object(sys, 'argv', ['prepare', '--experiment', 'test', '--mode', 'cold', '--output', str(root / 'cold')]):
+                    with self.assertRaises(FileExistsError):
+                        startup.main()
+
     def test_publication_only_selects_player_and_previews(self):
         report = [{"id": f"case-{i}", "a": f"case-{i}/baseline-web.mp4",
                    "b": f"case-{i}/light-web.mp4"} for i in range(10)]

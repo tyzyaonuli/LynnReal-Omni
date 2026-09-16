@@ -29,6 +29,7 @@ EVAL_VARIANT=""
 H3_CASE=""
 H3_PREFLIGHT=""
 H3_RUNTIME_RECEIPT=""
+H3_STARTUP_RECEIPT=""
 H3_RESUME_JOB=""
 H3_VARIANT="both"
 
@@ -50,6 +51,7 @@ while (($#)); do
     --h3-variant) H3_VARIANT="${2:?--h3-variant requires baseline, light or both}"; shift 2 ;;
     --preflight-receipt) H3_PREFLIGHT="${2:?--preflight-receipt requires a JSON path}"; shift 2 ;;
     --runtime-receipt) H3_RUNTIME_RECEIPT="${2:?--runtime-receipt requires a JSON path}"; shift 2 ;;
+    --startup-receipt) H3_STARTUP_RECEIPT="${2:?--startup-receipt requires a JSON path}"; shift 2 ;;
     -h|--help)
       cat <<'EOF'
 Usage:
@@ -117,6 +119,17 @@ git diff --quiet || {
 }
 
 release_sha="$(git rev-parse HEAD)"
+if [[ -n "$H3_STARTUP_RECEIPT" ]]; then
+  [[ "$RUN_MODE" == h3-vae-ab && -z "$H3_RESUME_JOB" ]] || { echo "startup comparison requires fresh H3 results" >&2; exit 2; }
+  python3 - "$H3_STARTUP_RECEIPT" "$release_sha" <<'PY'
+import json,sys,re
+from pathlib import Path
+r=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+assert r['complete'] and not r['gpu_used'] and r['code_sha']==sys.argv[2]
+assert r['mode'] in ('cold','warm') and re.fullmatch('[a-z0-9-]+',r['experiment'])
+assert r['root']=='/cpfs/world-model/lynnreal-omni/cache/startup-ab/'+r['experiment']
+PY
+fi
 bootstrap="script/aliyun_thailand_b300_inference_bootstrap.sh"
 [[ "$RUN_MODE" != "h3-vae-ab" ]] || bootstrap="script/aliyun_thailand_h3_vae_ab_bootstrap.sh"
 downloader="script/modelscope_hz_multipart_download.py"
@@ -132,6 +145,7 @@ diffusers_sha="584a47eb49eaf60fda2843317708eacc6a7d9622f1630d9badb0b33fc480aaba"
 bundle_id="$release_sha-$bootstrap_sha"
 if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
   bundle_id="$release_sha-$bootstrap_sha-h3-vae-ab-${H3_CASE:-all}"
+  [[ -z "$H3_STARTUP_RECEIPT" ]] || bundle_id="$bundle_id-startup-$(sha256sum "$H3_STARTUP_RECEIPT" | cut -c1-12)"
 fi
 if [[ "$RUN_MODE" == "eval" ]]; then
   python3 "$eval_runner" --manifest "$EVAL_MANIFEST" --variant "$EVAL_VARIANT" \
@@ -175,6 +189,7 @@ if [[ "$SUBMIT" == true ]]; then
     if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
       cp "$H3_PREFLIGHT" "$bundle_dir/source/eval/h3_vae_ab/preflight-receipt.json"
       cp "$H3_RUNTIME_RECEIPT" "$bundle_dir/source/eval/h3_vae_ab/runtime-receipt.json"
+      [[ -z "$H3_STARTUP_RECEIPT" ]] || cp "$H3_STARTUP_RECEIPT" "$bundle_dir/source/eval/h3_vae_ab/startup-receipt.json"
     fi
     cp "$bootstrap" "$bundle_dir/source/$bootstrap"
     cp "$downloader" "$bundle_dir/source/$downloader"

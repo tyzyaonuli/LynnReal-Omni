@@ -4,8 +4,8 @@ readonly ROOT="$(pwd)"
 readonly PERSIST=/cpfs/world-model/lynnreal-omni
 readonly RESULT="$PERSIST/results/${DLC_JOB_ID:?DLC_JOB_ID required}"
 readonly OSS_RESULT="/mnt/world-model/results/lynnreal-omni/$DLC_JOB_ID"
-readonly H3="$PERSIST/models/h3-bfc8ed0353f5a9733be73e6b2c98ec0948195b86"
-readonly LIGHT="$PERSIST/models/light-vae-e453444c1a52b73a0c5eb0023d208c473c2bb26a"
+H3="$PERSIST/models/h3-bfc8ed0353f5a9733be73e6b2c98ec0948195b86"
+LIGHT="$PERSIST/models/light-vae-e453444c1a52b73a0c5eb0023d208c473c2bb26a"
 readonly ARCHIVE="$PERSIST/cache/env/py312-torch2121-cu130-lynnreal-0384eca3d5d7482d.tar.gz"
 readonly LOCAL="/local/h3-vae-ab/$DLC_JOB_ID"
 readonly PYTHON=/opt/minwm/venv/bin/python
@@ -18,6 +18,22 @@ finish() {
 }
 trap finish EXIT
 date -u +%FT%TZ > "$RESULT/bootstrap-start.txt"
+startup_root=""
+if [[ -s eval/h3_vae_ab/startup-receipt.json ]]; then
+  startup_root="$(python3 - <<'PY'
+import json,os
+from pathlib import Path
+r=json.loads(Path('eval/h3_vae_ab/startup-receipt.json').read_text())
+m=json.loads((Path(r['root'])/'READY.json').read_text())
+assert r['complete'] and m['complete'] and r['code_sha']==m['code_sha']==os.environ['LYNNREAL_RELEASE_SHA']
+assert r['archive_sha256']==m['archive_sha256']
+print(r['root'])
+PY
+)"
+  H3="$startup_root/h3"
+  LIGHT="$startup_root/light"
+  cp eval/h3_vae_ab/startup-receipt.json "$RESULT/startup-cache.json"
+fi
 test -s "$H3/H3_VAE_AB_READY.json"
 test -s "$LIGHT/H3_VAE_AB_READY.json"
 test -s "$ARCHIVE"
@@ -34,12 +50,22 @@ with archive.open('rb') as stream:
 assert h.hexdigest() == marker['archive_sha256']
 PY
 date -u +%FT%TZ > "$RESULT/environment-restore-start.txt"
-tar -xzf "$ARCHIVE" -C "$LOCAL"
-export PYTHONPATH="$LOCAL/overlay:$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+if [[ -n "$startup_root" ]]; then
+  overlay="$startup_root/environment/overlay"
+  test -d "$overlay"
+else
+  tar -xzf "$ARCHIVE" -C "$LOCAL"
+  overlay="$LOCAL/overlay"
+fi
+export PYTHONPATH="$overlay:$ROOT${PYTHONPATH:+:$PYTHONPATH}"
 export CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 runtime_key="$(sha256sum model/light_vae.py script/eval_h3_vae_ab.py | sha256sum | cut -c1-16)"
 export TRITON_CACHE_DIR="$PERSIST/cache/compiled/h3-vae-ab-bf16-native-$runtime_key/triton"
 export TORCHINDUCTOR_CACHE_DIR="$PERSIST/cache/compiled/h3-vae-ab-bf16-native-$runtime_key/inductor"
+if [[ -n "$startup_root" ]]; then
+  export TRITON_CACHE_DIR="$startup_root/compiled/$runtime_key/triton"
+  export TORCHINDUCTOR_CACHE_DIR="$startup_root/compiled/$runtime_key/inductor"
+fi
 date -u +%FT%TZ > "$RESULT/environment-restore-finish.txt"
 "$PYTHON" - <<'PY'
 import torch

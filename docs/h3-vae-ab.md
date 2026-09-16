@@ -137,3 +137,33 @@ Published HTML embeds absolute preview URLs, so downloading and opening just the
 HTML also works. Use `--publish --html-only` to refresh it without copying videos.
 The report JSON retains relative paths for portable regeneration. The publisher
 requires the per-case JSON records beside `report.json` to rebuild the page.
+
+## Controlled application-cache cold/warm comparison
+
+Use a unique namespace and one committed revision for both halves. This measures
+an empty application cache against reusing the same complete environment/weight
+cache. Source CPFS data, host page cache and container image cache are not cleared;
+record scheduler/image events separately and do not call this a cold machine.
+The CPU stage copies and hash-verifies all weight bytes, expands the pinned
+environment, then publishes a READY marker. Warm preparation validates the marker
+and file sizes without copying bytes. Shared model caches are never deleted.
+
+```bash
+export H3_STARTUP_EXPERIMENT=h3-startup-YYYYMMDD-r1
+export H3_STARTUP_MODE=cold
+bash script/aliyun_thailand_model_cache_submit.sh --sync --submit --h3-startup
+# Download startup-cache.json from this CPU job's printed results prefix.
+bash script/aliyun_thailand_b300_submit.sh --submit --h3-vae-ab \
+  --case 01-rally-drift --preflight-receipt weights-preflight.json \
+  --runtime-receipt runtime-preflight.json --startup-receipt cold-startup-cache.json
+# Wait for the GPU job to end before proceeding; do not use --resume-job.
+export H3_STARTUP_MODE=warm
+bash script/aliyun_thailand_model_cache_submit.sh --sync --submit --h3-startup
+# Repeat the identical GPU command with the warm startup-cache.json receipt.
+```
+
+Record CPU cache preparation, PAI scheduling/image setup, GPU bootstrap, model
+loading, separate warmup and first measured case. Compare actual new inference
+in both halves; resuming completed outputs is not a warm-cache inference run.
+Compilation is disabled for this native-attention evaluation. Kernel-cache paths
+are isolated by experiment, but no persistent compilation benefit is presumed.
