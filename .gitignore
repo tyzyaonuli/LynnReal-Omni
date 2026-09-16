@@ -34,6 +34,7 @@ credentials.json
 /test/**/*.py
 /test/**/*.sh
 /test/**/*.ipynb
+!/test/test_eval_t2v.py
 
 # Publish only tools required by the inference entry points.
 /tool/*

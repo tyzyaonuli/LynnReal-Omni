@@ -22,15 +22,21 @@ RESOURCE_SHARED_MEMORY="${PAI_RESOURCE_SHARED_MEMORY:-64Gi}"
 MAX_MINUTES="${PAI_MAX_MINUTES:-360}"
 PAI_SESSION_ID="${PAI_SESSION_ID:-$(date +%s)-$RANDOM}"
 USER_AGENT="${PAI_USER_AGENT:-AlibabaCloud-Agent-Skills/alibabacloud-pai-dlc-job/$PAI_SESSION_ID}"
-SUBMIT=false
+ACTION=""
 RUN_MODE="speed-test"
 EVAL_MANIFEST=""
 EVAL_VARIANT=""
 
 while (($#)); do
   case "$1" in
-    --submit) SUBMIT=true; shift ;;
-    --dry-run) shift ;;
+    --submit|--dry-run)
+      [[ -z "$ACTION" ]] || {
+        echo "do not combine or repeat --submit and --dry-run" >&2
+        exit 2
+      }
+      ACTION="${1#--}"
+      shift
+      ;;
     --eval-manifest) EVAL_MANIFEST="${2:?--eval-manifest requires a path}"; shift 2 ;;
     --variant) EVAL_VARIANT="${2:?--variant requires standard or flash}"; shift 2 ;;
     -h|--help)
@@ -49,6 +55,8 @@ EOF
     *) echo "unexpected argument: $1" >&2; exit 2 ;;
   esac
 done
+SUBMIT=false
+[[ "$ACTION" == "submit" ]] && SUBMIT=true
 if [[ -n "$EVAL_MANIFEST" || -n "$EVAL_VARIANT" ]]; then
   [[ -n "$EVAL_MANIFEST" && "$EVAL_VARIANT" =~ ^(standard|flash)$ ]] || {
     echo "eval mode requires --eval-manifest and --variant standard|flash" >&2
@@ -59,12 +67,17 @@ if [[ -n "$EVAL_MANIFEST" || -n "$EVAL_VARIANT" ]]; then
   RUN_MODE="eval"
 fi
 [[ "$RESOURCE_GPU" == "1" ]] || { echo "this inference entry requires exactly one GPU" >&2; exit 2; }
-command -v aliyun >/dev/null
-command -v git >/dev/null
-command -v jq >/dev/null
+for command in aliyun curl git jq python3 sha256sum tar; do
+  command -v "$command" >/dev/null || {
+    echo "required command not found: $command" >&2
+    exit 2
+  }
+done
 git diff --cached --quiet || { echo "staged changes are not supported by this submitter" >&2; exit 2; }
-unexpected_changes="$(git diff --name-only | grep -Ev '^model/(int8_gemm|int8_tma)\.py$' || true)"
-[[ -z "$unexpected_changes" ]] || { printf 'unexpected tracked changes:\n%s\n' "$unexpected_changes" >&2; exit 2; }
+git diff --quiet || {
+  echo "tracked changes are not supported; commit them so release_sha matches the bundle" >&2
+  exit 2
+}
 
 release_sha="$(git rev-parse HEAD)"
 bootstrap="script/aliyun_thailand_b300_inference_bootstrap.sh"

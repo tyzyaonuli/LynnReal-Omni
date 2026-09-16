@@ -264,7 +264,8 @@ def main() -> None:
             frames = [frame.crop((0, top, width, top + height)) for frame in frames[: args.frame]]
             sample_rate = int(state["sampling_rate"])
             audio = state["audio"][0][..., : round(args.frame * sample_rate / 24)]
-            video_path = samples_dir / f"{request['id']}.mp4"
+            video_relpath = f"samples/{request['id']}.mp4"
+            video_path = output / video_relpath
             encode_video(
                 frames,
                 fps=24,
@@ -275,6 +276,7 @@ def main() -> None:
             record = {
                 **request,
                 "video": str(video_path),
+                "video_relpath": video_relpath,
                 "video_sha256": sha256(video_path),
                 "variant": args.variant,
                 "precision": "W8A8",
