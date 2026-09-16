@@ -14,7 +14,12 @@ exec > >(tee -a "$RESULT/bootstrap.log") 2>&1
 finish() {
   local rc=$?
   if ((rc != 0)); then printf '%s\n' "$rc" > "$RESULT/FAILED"; fi
-  cp -a "$RESULT/." "$OSS_RESULT/"
+  if [[ "${LYNNREAL_H3_TAE_ONLY:-0}" == 1 ]]; then
+    # Keep lossless masters on CPFS; publish small evidence first, then previews.
+    python3 script/upload_h3_tae_results.py "$RESULT" "$OSS_RESULT"
+  else
+    cp -a "$RESULT/." "$OSS_RESULT/"
+  fi
 }
 trap finish EXIT
 date -u +%FT%TZ > "$RESULT/bootstrap-start.txt"
@@ -74,6 +79,21 @@ assert torch.cuda.device_count() == 1
 assert torch.cuda.get_device_capability(0)[0] >= 10
 print({'torch': torch.__version__, 'gpu': torch.cuda.get_device_name(0), 'capability': torch.cuda.get_device_capability(0)}, flush=True)
 PY
+if [[ "${LYNNREAL_H3_TAE_ONLY:-0}" == 1 ]]; then
+  checkpoint="$PERSIST/models/taehv-011dfc2112197741c540e0bdd5b7b67bcc930771/taeh3.pth"
+  mkdir -p "$(dirname "$checkpoint")"
+  if [[ ! -s "$checkpoint" ]]; then
+    cp /mnt/world-model/lynnreal-omni/taehv/011dfc2112197741c540e0bdd5b7b67bcc930771/taeh3.pth "$checkpoint.partial"
+    echo "af92965c2d7986a89a757e7cccd26f9eeeff0c3f0d5495eb168aeb2d6d9be9ba  $checkpoint.partial" | sha256sum -c -
+    mv "$checkpoint.partial" "$checkpoint"
+  fi
+  tae_args=(--source "$PERSIST/results/$LYNNREAL_H3_RESUME_JOB/eval" --output "$RESULT/eval" --checkpoint "$checkpoint")
+  [[ -z "${LYNNREAL_H3_CASE:-}" ]] || tae_args+=(--case "$LYNNREAL_H3_CASE")
+  "$PYTHON" -u script/eval_h3_tae.py "${tae_args[@]}"
+  date -u +%FT%TZ > "$RESULT/bootstrap-finish.txt"
+  printf 'complete\n' > "$RESULT/READY"
+  exit 0
+fi
 if [[ -n "${LYNNREAL_H3_RESUME_JOB:-}" ]]; then
   [[ "$LYNNREAL_H3_RESUME_JOB" =~ ^dlc[a-z0-9]+$ ]]
   previous="$PERSIST/results/$LYNNREAL_H3_RESUME_JOB"

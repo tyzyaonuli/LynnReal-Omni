@@ -31,10 +31,16 @@ def main():
     parser.add_argument("--publish", action="store_true", help="Default only prints the exact publication plan")
     parser.add_argument("--html-only", action="store_true", help="Refresh HTML using already published previews")
     parser.add_argument('--tae-reference', type=Path, help='Add historical TAE videos in randomized blind comparison')
+    parser.add_argument('--tae-results', type=Path, help='Verified per-case TAE records from this B300 comparison')
+    parser.add_argument('--tae-job-id', help='Source job for the ten new TAE previews')
     args = parser.parse_args()
     if not re.fullmatch(r"dlc[a-z0-9]+", args.job_id):
         raise ValueError("Invalid job ID")
     files = publication_files(json.loads(args.report.read_text(encoding="utf-8")))
+    if args.tae_results:
+        if not args.tae_job_id or not re.fullmatch(r'dlc[a-z0-9]+',args.tae_job_id) or args.tae_reference:
+            raise ValueError('Current TAE requires source job and no historical reference')
+        build(args.report.parent,Path(__file__).resolve().parents[1]/'eval/h3_vae_ab/manifest.json',tae_results=args.tae_results)
     bucket = "leap-worldmodel-thailand"
     source = f"oss://{bucket}/world-model/results/lynnreal-omni/{args.job_id}/eval/"
     prefix = f"world-model/public/lynnreal-h3-vae-ab/{args.job_id}/"
@@ -51,7 +57,12 @@ def main():
             oss("cp", source + name, target + name, "--force")
             oss("set-acl", target + name, "public-read", "--force")
     media_base = f"https://{bucket}.oss-ap-southeast-7.aliyuncs.com/{prefix}"
-    build(args.report.parent, Path(__file__).resolve().parents[1] / "eval/h3_vae_ab/manifest.json", media_base, args.tae_reference)
+    if args.tae_results:
+        for case in json.loads(args.report.read_text(encoding='utf-8')):
+            name = case['id']+'/tae-web.mp4'
+            oss('cp',f'oss://{bucket}/world-model/results/lynnreal-omni/{args.tae_job_id}/eval/'+name,target+name,'--force')
+            oss('set-acl',target+name,'public-read','--force')
+    build(args.report.parent, Path(__file__).resolve().parents[1] / "eval/h3_vae_ab/manifest.json", media_base, args.tae_reference, args.tae_results)
     oss("cp", str(args.report.parent / "player.html"), target + "player.html", "--force")
     oss("set-acl", target + "player.html", "public-read", "--force")
     print(f"https://{bucket}.oss-ap-southeast-7.aliyuncs.com/{prefix}player.html")

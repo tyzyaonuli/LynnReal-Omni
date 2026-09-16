@@ -11,15 +11,15 @@ body{background:#10131a;color:#edf1f7;font:16px system-ui;margin:24px auto;max-w
 <section><h3 id="label1"></h3><video id="v1" playsinline controls preload="metadata"></video><pre id="m1" hidden></pre></section>
 <section><h3 id="label2"></h3><video id="v2" playsinline controls preload="metadata"></video><pre id="m2" hidden></pre></section>
 </div></div><p id="status" role="status"></p>
-<p class="muted">比较范围：其中两路是本次同 latent / 同音频的严格配对，另一路取自历史测试；虽然提示词、种子和尺寸一致，跨测试的 latent 一致性未验证。请将三路作为画面参考，不能仅凭该页面把所有差异归因于 VAE。</p>
-<p id="source" hidden class="muted">H3 默认 VAE 与 LynnReal Light VAE：本次单卡 B300；TAEHV taeh3：历史 AWS 测试。TAE 视频沿用原 S3 地址，历史总耗时不与本次解码耗时并列比较。</p>
+<p class="muted">__COMPARISON_NOTE__</p>
+<p id="source" hidden class="muted">__SOURCE_NOTE__</p>
 <script>
 const cases=__DATA__, $=id=>document.getElementById(id), videos=[0,1,2].map(n=>$('v'+n));
 let index=0, revealed=false, sequential=false, loading=false, syncing=false, advancing=false;
 const positions=['左侧','中间','右侧'];
 function randomOrder(){const a=[0,1,2];for(let j=2;j>0;j--){const x=new Uint32Array(1);crypto.getRandomValues(x);const k=Math.floor(x[0]/4294967296*(j+1));[a[j],a[k]]=[a[k],a[j]]}return a}
 let orders=cases.map(randomOrder);
-function entries(){const c=cases[index];return [{name:'H3 默认 VAE',src:c.a,metrics:c.a_metrics},{name:'LynnReal Light VAE',src:c.b,metrics:c.b_metrics},{name:'TAEHV taeh3',src:c.c}];}
+function entries(){const c=cases[index];return [{name:'H3 默认 VAE',src:c.a,metrics:c.a_metrics},{name:'LynnReal Light VAE',src:c.b,metrics:c.b_metrics},{name:'TAEHV taeh3',src:c.c,metrics:c.c_metrics}];}
 function labels(){const e=entries();orders[index].forEach((which,n)=>{const item=e[which];$('label'+n).textContent=revealed?positions[n]+' · '+item.name:positions[n]+' · 视频 '+(n+1);$('m'+n).hidden=!revealed;$('m'+n).textContent=item.metrics?`解码 ${(item.metrics.wall_seconds*1000).toFixed(1)} ms · 峰值 allocated ${(item.metrics.peak_allocated_bytes/2**30).toFixed(2)} GiB`:'历史参考；不作跨硬件耗时比较';});$('reveal').textContent=revealed?'隐藏 VAE 名称':'显示 VAE 名称';$('reveal').setAttribute('aria-pressed',String(revealed));$('source').hidden=!revealed;}
 function sound(){videos.forEach((v,n)=>v.muted=$('audio').value!==String(n));}
 function pause(){videos.forEach(v=>v.pause());}

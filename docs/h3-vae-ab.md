@@ -162,6 +162,28 @@ The reshuffle button changes the current case's order and hides identities again
 Audio selection uses screen positions, with all lanes initially muted. This is
 casual visual blinding, not tamper-proof concealment from browser source inspection.
 
+### TAE-only run on the same B300 profile
+
+Use `--h3-vae-ab --tae-only --resume-job <completed-ten-case-job>` with the same
+CPU receipts; `--case 01-rally-drift` selects a smoke test. Here `--resume-job`
+is a read-only source of saved latents and audio, not a request to rerun either
+existing decoder. The runner checks input hashes and the pinned manifest, warms
+TAE on the saved separate warmup sample, then decodes the requested cases.
+
+TAEHV is pinned to `011dfc2112197741c540e0bdd5b7b67bcc930771`; `taeh3.pth` SHA256
+is `af92965c2d7986a89a757e7cccd26f9eeeff0c3f0d5495eb168aeb2d6d9be9ba`.
+Use FP32 decoder weights and FP16 autocast, no compilation, native sequential
+temporal decoding (`parallel=False`), and no spatial tiling. TAE consumes
+unpacked diffusion latents directly in NTCHW order, without reversing the full
+VAE's mean/std normalization. Its RGB output is already in [0,1]. The inherited
+sampling, audio, geometry, rounding and encoding remain identical. Decoder
+implementations have different memory strategies; these are explicitly recorded.
+
+Lossless TAE masters stay on CPFS. The cloud uploader transfers JSON evidence
+before browser previews with bounded retries. Build/publish the completed new
+lane with `--tae-results /path/to/tae/eval --tae-job-id <tae-job-id>` instead of
+`--tae-reference`. All three latent/audio identities must match before publication.
+
 ## Controlled application-cache cold/warm comparison
 
 Use a unique namespace and one committed revision for both halves. This measures

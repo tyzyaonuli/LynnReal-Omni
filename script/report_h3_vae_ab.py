@@ -4,7 +4,9 @@ import json
 from pathlib import Path
 
 
-def build(results, manifest_path=None, media_base=None, tae_reference=None):
+def build(results, manifest_path=None, media_base=None, tae_reference=None, tae_results=None):
+    if tae_reference and tae_results:
+        raise ValueError('Choose current TAE results or historical reference')
     cases = []
     manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path else None
     expected = {c["id"]: c for c in manifest["cases"]} if manifest else None
@@ -31,6 +33,18 @@ def build(results, manifest_path=None, media_base=None, tae_reference=None):
         order = {key: index for index, key in enumerate(expected)}
         cases.sort(key=lambda case: order[case["id"]])
     displayed = [dict(c, a=media_base.rstrip('/') + '/' + c['a'], b=media_base.rstrip('/') + '/' + c['b']) for c in cases] if media_base else cases
+    if tae_results:
+        for case in displayed:
+            ref = json.loads((Path(tae_results)/case['id']/'tae.json').read_text(encoding='utf-8'))
+            baseline = json.loads((results/case['id']/'baseline.json').read_text(encoding='utf-8'))
+            if ref['status'] != 'complete' or ref['case'] != baseline['case']:
+                raise ValueError('TAE case mismatch')
+            if any(ref[k] != baseline[k] for k in ('latent_sha256','audio_sha256','decoded_audio_sha256')):
+                raise ValueError('TAE input/audio mismatch')
+            if (ref['width'],ref['height'],ref['frames'],ref['fps']) != (1344,768,124,24):
+                raise ValueError('TAE geometry mismatch')
+            case['c'] = (media_base.rstrip('/')+'/' if media_base else '')+case['id']+'/tae-web.mp4'
+            case['c_metrics'] = ref['decoder']
     if tae_reference:
         reference = json.loads(Path(tae_reference).read_text(encoding='utf-8-sig'))
         refs = {c['id']: c for c in reference['cases']}
@@ -47,7 +61,14 @@ def build(results, manifest_path=None, media_base=None, tae_reference=None):
             if ref['b']['src'] != expected:
                 raise ValueError('Unexpected TAE video path')
             case['c'] = 'https://minimax-h3-taehv-ab-public-20260904-b67d9f.s3.us-west-2.amazonaws.com/' + expected
+    if tae_reference or tae_results:
         template = (Path(__file__).parent / 'h3_vae_blind_player.html').read_text(encoding='utf-8')
+        if tae_results:
+            template = template.replace('__COMPARISON_NOTE__','三路均使用本次 H3 的同一份 latent 和音频，在单张 B300 上解码；实际 NFE 5、相同种子、尺寸与视频编码。')
+            template = template.replace('__SOURCE_NOTE__','H3 默认 VAE / LynnReal Light VAE / TAEHV taeh3：均为单卡 B300。本次仅补跑 TAE 解码，前两路保持原结果。TAE 使用原生逐帧解码，默认与 Light 使用原生空间分块；耗时为各自预热后的解码阶段。')
+        else:
+            template = template.replace('__COMPARISON_NOTE__','其中两路为本次同 latent / 同音频配对，另一路为历史参考；跨测试 latent 一致性未验证，不能将全部差异归因于 VAE。')
+            template = template.replace('__SOURCE_NOTE__','默认与 Light：本次 B300；TAEHV：历史 AWS 测试，视频沿用 S3。历史耗时不作跨硬件比较。')
         data = json.dumps(displayed, ensure_ascii=False).replace('<', '\\u003c')
         (results / 'player.html').write_text(template.replace('__DATA__', data), encoding='utf-8')
         (results / 'report.json').write_text(json.dumps(cases, ensure_ascii=False, indent=2), encoding='utf-8')
