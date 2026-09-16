@@ -26,6 +26,11 @@ ACTION=""
 RUN_MODE="speed-test"
 EVAL_MANIFEST=""
 EVAL_VARIANT=""
+H3_CASE=""
+H3_PREFLIGHT=""
+H3_RUNTIME_RECEIPT=""
+H3_RESUME_JOB=""
+H3_VARIANT="both"
 
 while (($#)); do
   case "$1" in
@@ -39,9 +44,18 @@ while (($#)); do
       ;;
     --eval-manifest) EVAL_MANIFEST="${2:?--eval-manifest requires a path}"; shift 2 ;;
     --variant) EVAL_VARIANT="${2:?--variant requires standard or flash}"; shift 2 ;;
+    --h3-vae-ab) RUN_MODE="h3-vae-ab"; shift ;;
+    --case) H3_CASE="${2:?--case requires an ID}"; shift 2 ;;
+    --resume-job) H3_RESUME_JOB="${2:?--resume-job requires a previous job ID}"; shift 2 ;;
+    --h3-variant) H3_VARIANT="${2:?--h3-variant requires baseline, light or both}"; shift 2 ;;
+    --preflight-receipt) H3_PREFLIGHT="${2:?--preflight-receipt requires a JSON path}"; shift 2 ;;
+    --runtime-receipt) H3_RUNTIME_RECEIPT="${2:?--runtime-receipt requires a JSON path}"; shift 2 ;;
     -h|--help)
       cat <<'EOF'
 Usage:
+  bash script/aliyun_thailand_b300_submit.sh [--dry-run|--submit] --h3-vae-ab \
+    --preflight-receipt weights.json --runtime-receipt runtime.json \
+    [--case CASE_ID] [--h3-variant baseline|light|both] [--resume-job JOB_ID]
   bash script/aliyun_thailand_b300_submit.sh [--dry-run|--submit]
   bash script/aliyun_thailand_b300_submit.sh [--dry-run|--submit] \
     --eval-manifest prompts.jsonl --variant standard|flash
@@ -58,6 +72,7 @@ done
 SUBMIT=false
 [[ "$ACTION" == "submit" ]] && SUBMIT=true
 if [[ -n "$EVAL_MANIFEST" || -n "$EVAL_VARIANT" ]]; then
+  [[ "$RUN_MODE" != "h3-vae-ab" ]] || { echo "H3 A/B cannot use Standard/Flash flags" >&2; exit 2; }
   [[ -n "$EVAL_MANIFEST" && "$EVAL_VARIANT" =~ ^(standard|flash)$ ]] || {
     echo "eval mode requires --eval-manifest and --variant standard|flash" >&2
     exit 2
@@ -73,6 +88,28 @@ for command in aliyun curl git jq python3 sha256sum tar; do
     exit 2
   }
 done
+if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
+  [[ "$H3_VARIANT" =~ ^(baseline|light|both)$ ]] || { echo "invalid H3 variant" >&2; exit 2; }
+  [[ -z "$H3_RESUME_JOB" || "$H3_RESUME_JOB" =~ ^dlc[a-z0-9]+$ ]] || { echo "invalid resume job ID" >&2; exit 2; }
+  [[ -n "$H3_PREFLIGHT" ]] || { echo "H3 A/B requires a completed CPU preflight receipt" >&2; exit 2; }
+  [[ -n "$H3_RUNTIME_RECEIPT" ]] || { echo "H3 A/B requires a CPU runtime receipt" >&2; exit 2; }
+  python3 - "$H3_PREFLIGHT" "$H3_RUNTIME_RECEIPT" <<'PY'
+import json, sys
+from pathlib import Path
+r = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+m = json.loads(Path('eval/h3_vae_ab/manifest.json').read_text(encoding="utf-8"))
+assert r['complete'] and not r['gpu_used']
+assert r['models']['h3']['revision'] == m['model']['revision']
+assert r['models']['light']['revision'] == m['light_vae']['revision']
+assert r['environment_archives']
+e = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+assert e['status'] == 'passed' and not e['gpu_used'] and e['sigma_schedule_verified']
+assert e['archive'] in r['environment_archives']
+PY
+  dry_args=(--dry-run --output /tmp/h3-vae-ab-dry-run)
+  [[ -z "$H3_CASE" ]] || dry_args+=(--case "$H3_CASE")
+  python3 script/eval_h3_vae_ab.py "${dry_args[@]}"
+fi
 git diff --cached --quiet || { echo "staged changes are not supported by this submitter" >&2; exit 2; }
 git diff --quiet || {
   echo "tracked changes are not supported; commit them so release_sha matches the bundle" >&2
@@ -81,6 +118,7 @@ git diff --quiet || {
 
 release_sha="$(git rev-parse HEAD)"
 bootstrap="script/aliyun_thailand_b300_inference_bootstrap.sh"
+[[ "$RUN_MODE" != "h3-vae-ab" ]] || bootstrap="script/aliyun_thailand_h3_vae_ab_bootstrap.sh"
 downloader="script/modelscope_hz_multipart_download.py"
 manifest_builder="script/prepare_aliyun_thailand_model_manifests.py"
 kernel_validator="script/validate_int8_gemm.py"
@@ -92,6 +130,9 @@ bootstrap_sha="$(sha256sum "$bootstrap" "$downloader" "$manifest_builder" "$kern
 diffusers_url="https://github.com/huggingface/diffusers/archive/abc5e9bf71fd38f53cd471bc3acaa84bc5ecbfdc.tar.gz"
 diffusers_sha="584a47eb49eaf60fda2843317708eacc6a7d9622f1630d9badb0b33fc480aaba"
 bundle_id="$release_sha-$bootstrap_sha"
+if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
+  bundle_id="$release_sha-$bootstrap_sha-h3-vae-ab-${H3_CASE:-all}"
+fi
 if [[ "$RUN_MODE" == "eval" ]]; then
   python3 "$eval_runner" --manifest "$EVAL_MANIFEST" --variant "$EVAL_VARIANT" \
     --output /tmp/lynnreal-eval-dry-run --dry-run >/dev/null
@@ -114,6 +155,10 @@ if [[ "$RUN_MODE" == "eval" ]]; then
   eval_exports="export LYNNREAL_EVAL_MANIFEST=/workspace/LynnReal-Omni/eval/input.jsonl LYNNREAL_EVAL_VARIANT=$EVAL_VARIANT;"
 fi
 user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_RUN_MODE=$RUN_MODE; $eval_exports exec bash script/aliyun_thailand_b300_inference_bootstrap.sh"
+if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
+  [[ "$H3_CASE" =~ ^[a-z0-9-]*$ ]] || { echo "invalid H3 case ID" >&2; exit 2; }
+  user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_H3_CASE=$H3_CASE LYNNREAL_H3_VARIANT=$H3_VARIANT LYNNREAL_H3_RESUME_JOB=$H3_RESUME_JOB; exec bash $bootstrap"
+fi
 
 registry="${IMAGE%%/*}"
 acr_username='<temporary-user>'
@@ -127,6 +172,10 @@ if [[ "$SUBMIT" == true ]]; then
     trap 'rm -rf "$bundle_dir"' EXIT
     mkdir -p "$bundle_dir/source"
     git archive "$release_sha" | tar -x -C "$bundle_dir/source"
+    if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
+      cp "$H3_PREFLIGHT" "$bundle_dir/source/eval/h3_vae_ab/preflight-receipt.json"
+      cp "$H3_RUNTIME_RECEIPT" "$bundle_dir/source/eval/h3_vae_ab/runtime-receipt.json"
+    fi
     cp "$bootstrap" "$bundle_dir/source/$bootstrap"
     cp "$downloader" "$bundle_dir/source/$downloader"
     cp "$manifest_builder" "$bundle_dir/source/$manifest_builder"
@@ -138,6 +187,7 @@ if [[ "$SUBMIT" == true ]]; then
       cp "$EVAL_MANIFEST" "$bundle_dir/source/eval/input.jsonl"
     fi
     mkdir -p "$bundle_dir/source/vendor"
+    if [[ "$RUN_MODE" != "h3-vae-ab" ]]; then
     if [[ -s /tmp/diffusers-abc5e9bf71fd.tar.gz ]] && \
         [[ "$(sha256sum /tmp/diffusers-abc5e9bf71fd.tar.gz | cut -d' ' -f1)" == "$diffusers_sha" ]]; then
       cp /tmp/diffusers-abc5e9bf71fd.tar.gz "$bundle_dir/source/vendor/diffusers-abc5e9bf71fd.tar.gz"
@@ -159,9 +209,12 @@ if [[ "$SUBMIT" == true ]]; then
     else
       python3 "$manifest_builder" --output "$bundle_dir/source/vendor"
     fi
+    fi
     tar -czf "$bundle_dir/source.tar.gz" -C "$bundle_dir/source" .
+    upload_path="$bundle_dir/source.tar.gz"
+    if command -v cygpath >/dev/null; then upload_path="$(cygpath -w "$upload_path")"; fi
     aliyun --profile "$PROFILE" --user-agent "$USER_AGENT" oss cp \
-      "$bundle_dir/source.tar.gz" "$bundle_uri" --region "$REGION" \
+      "$upload_path" "$bundle_uri" --region "$REGION" \
       --endpoint "oss-$REGION.aliyuncs.com" --force >/dev/null
   fi
   acr_auth="$(aliyun --profile "$PROFILE" --region "$REGION" --connect-timeout 15 \
@@ -180,8 +233,10 @@ args=(pai-dlc create-job --display-name "$job_name" --job-type PyTorchJob \
   --user-vpc "$user_vpc" --settings "$settings" --accessibility PRIVATE \
   --job-max-running-time-minutes "$MAX_MINUTES" --user-agent "$USER_AGENT")
 
+variant_label="${EVAL_VARIANT:-standard+flash}"
+[[ "$RUN_MODE" != "h3-vae-ab" ]] || variant_label="H3-$H3_VARIANT"
 printf 'job_name=%s\nmode=%s variant=%s\nresource=%sGPU/%sCPU/%s/shm-%s\nbundle=%s\n' \
-  "$job_name" "$RUN_MODE" "${EVAL_VARIANT:-standard+flash}" "$RESOURCE_GPU" "$RESOURCE_CPU" \
+  "$job_name" "$RUN_MODE" "$variant_label" "$RESOURCE_GPU" "$RESOURCE_CPU" \
   "$RESOURCE_MEMORY" "$RESOURCE_SHARED_MEMORY" "$bundle_uri" >&2
 if [[ "$SUBMIT" == true ]]; then
   aliyun --profile "$PROFILE" --region "$REGION" --connect-timeout 15 --read-timeout 30 \

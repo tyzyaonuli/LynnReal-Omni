@@ -7,6 +7,8 @@ cd "$ROOT"
 PROFILE="${ALIYUN_PROFILE:-shengdong}"
 MODE="${1:-}"
 ACTION="${2:---dry-run}"
+MODEL_SET="${3:-lynnreal}"
+[[ "$MODEL_SET" == "lynnreal" || "$MODEL_SET" == "--h3-fl2va" ]] || { echo "invalid model selection" >&2; exit 2; }
 PAI_SESSION_ID="${PAI_SESSION_ID:-$(date +%s)-$RANDOM}"
 USER_AGENT="${PAI_USER_AGENT:-AlibabaCloud-Agent-Skills/alibabacloud-pai-dlc-job/$PAI_SESSION_ID}"
 THAILAND_REGION="ap-southeast-7"
@@ -31,6 +33,9 @@ downloader="script/modelscope_hz_multipart_download.py"
 manifest_builder="script/prepare_aliyun_thailand_model_manifests.py"
 for path in "$stage_script" "$sync_script" "$downloader" "$manifest_builder"; do test -f "$path"; done
 bundle_hash="$(sha256sum "$stage_script" "$sync_script" "$downloader" "$manifest_builder" | sha256sum | cut -c1-12)"
+if [[ "$MODEL_SET" == "--h3-fl2va" ]]; then
+  bundle_hash="h3-fl2va-$({ sha256sum "$stage_script" "$downloader" "$sync_script" script/prepare_h3_vae_ab.py; find eval/h3_vae_ab -type f -print0 | sort -z | xargs -0 sha256sum; } | sha256sum | cut -c1-12)"
+fi
 bundle_name="model-cache-$bundle_hash.tar.gz"
 bundle_uri="$THAILAND_OSS_CLI/code/lynnreal-omni/$bundle_name"
 
@@ -46,6 +51,9 @@ if [[ "$MODE" == "--stage" ]]; then
   job_name="lynnreal-model-stage-$bundle_hash"
   user_command="set -euo pipefail; mkdir -p /workspace/lynnreal-model-cache; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_name -C /workspace/lynnreal-model-cache; cd /workspace/lynnreal-model-cache; python -c 'import requests'; python script/aliyun_modelscope_to_hangzhou_oss.py --manifest-dir vendor --stage-root /mnt/hangzhou-stage/lynnreal-omni/staged-models-crr"
   data_sources="$(jq -nc --arg code "$THAILAND_OSS_URI" --arg stage "oss://codex-minmaxh3-cache-97318276.oss-cn-hangzhou-internal.aliyuncs.com/world-model/" '[{Uri:$code,MountPath:"/mnt/world-model",MountAccess:"RO"},{Uri:$stage,MountPath:"/mnt/hangzhou-stage",MountAccess:"RW"}]')"
+  if [[ "$MODEL_SET" == "--h3-fl2va" ]]; then
+    user_command="$user_command --h3-fl2va"
+  fi
 else
   REGION="$THAILAND_REGION"
   WORKSPACE_ID="385"
@@ -54,6 +62,9 @@ else
   user_command="set -euo pipefail; mkdir -p /workspace/lynnreal-model-cache; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_name -C /workspace/lynnreal-model-cache; cd /workspace/lynnreal-model-cache; python script/aliyun_thailand_cpfs_model_sync.py --manifest-dir vendor --stage-root /mnt/world-model/lynnreal-omni/staged-models-crr --model-root /cpfs/world-model/lynnreal-omni/models"
   data_sources="$(jq -nc --arg oss "$THAILAND_OSS_URI" --arg cpfs "$CPFS_ECS_DATASET_ID" '[{Uri:$oss,MountPath:"/mnt/world-model",MountAccess:"RW"},{DataSourceId:$cpfs,DataSourceVersion:"v1",MountPath:"/cpfs",MountAccess:"RW"}]')"
   user_vpc="$(jq -nc '{VpcId:"vpc-0jono6k4fmswh8exr9n0s",SwitchId:"vsw-0johcol4d8ekvh2zc0e9t",SecurityGroupId:"sg-0jobja1grkgfne93adot",ExtendedCIDRs:["10.78.0.0/16"],DefaultRoute:"eth1"}')"
+  if [[ "$MODEL_SET" == "--h3-fl2va" ]]; then
+    user_command="set -euo pipefail; mkdir -p /workspace/lynnreal-model-cache; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_name -C /workspace/lynnreal-model-cache; cd /workspace/lynnreal-model-cache; python script/prepare_h3_vae_ab.py --wait-for-stage-seconds 600 --output /mnt/world-model/results/lynnreal-omni/$job_name"
+  fi
 fi
 
 if [[ "$ACTION" == "--submit" ]]; then
@@ -61,10 +72,19 @@ if [[ "$ACTION" == "--submit" ]]; then
   trap 'rm -rf "$bundle_dir"' EXIT
   mkdir -p "$bundle_dir/source/script" "$bundle_dir/source/vendor"
   cp "$stage_script" "$sync_script" "$downloader" "$bundle_dir/source/script/"
-  python3 "$manifest_builder" --output "$bundle_dir/source/vendor"
+  if [[ "$MODEL_SET" == "--h3-fl2va" ]]; then
+    cp -a eval/h3_vae_ab/staging/. "$bundle_dir/source/vendor/"
+    cp script/prepare_h3_vae_ab.py "$bundle_dir/source/script/"
+    mkdir -p "$bundle_dir/source/eval"
+    cp -a eval/h3_vae_ab "$bundle_dir/source/eval/"
+  else
+    python3 "$manifest_builder" --output "$bundle_dir/source/vendor"
+  fi
   tar -czf "$bundle_dir/$bundle_name" -C "$bundle_dir/source" .
+  upload_path="$bundle_dir/$bundle_name"
+  if command -v cygpath >/dev/null; then upload_path="$(cygpath -w "$upload_path")"; fi
   aliyun --profile "$PROFILE" --user-agent "$USER_AGENT" oss cp \
-    "$bundle_dir/$bundle_name" "$bundle_uri" --region "$THAILAND_REGION" \
+    "$upload_path" "$bundle_uri" --region "$THAILAND_REGION" \
     --endpoint "oss-$THAILAND_REGION.aliyuncs.com" --force >/dev/null
 fi
 

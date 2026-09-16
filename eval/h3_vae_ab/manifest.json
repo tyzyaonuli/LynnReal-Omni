@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "issue": "https://github.com/seedleap/LynnReal-Omni/issues/4",
+  "status": "reconstructed_from_historical_source_not_runtime_attested",
+  "historical_nfe5_runtime_verified": false,
+  "source": {
+    "repository": "seedleap/sglang",
+    "revision": "991f72a31b7469099f56851207f6a54dca0ba98d",
+    "note": "Immutable pre-publication H100-capable source; original NFE-5 runtime SHA has not been recovered."
+  },
+  "model": {
+    "id": "MiniMaxAI/MiniMax-H3",
+    "revision": "bfc8ed0353f5a9733be73e6b2c98ec0948195b86",
+    "variant": "fl2va",
+    "provenance": "Historical submitter default, corroborated by retained NFE-49 Job and request records; original NFE-5 resolved snapshot unavailable."
+  },
+  "sampling": {
+    "actual_nfe": 5,
+    "num_inference_steps": 6,
+    "flow_shift": 12.0,
+    "audio_flow_shift": 3.0,
+    "guidance_scale": 1.0,
+    "cfg_enabled": false,
+    "negative_prompt": null,
+    "warmup": {
+      "per_variant": 1,
+      "case_id": "01-rally-drift",
+      "seed": 40999
+    },
+    "sigma_schedule_fp32": {
+      "video": [
+        1.0,
+        0.9795918464660645,
+        0.9473683834075928,
+        0.8888888955116272,
+        0.75,
+        0.0
+      ],
+      "audio": [
+        1.0,
+        0.9230769872665405,
+        0.8181818127632141,
+        0.6666666865348816,
+        0.4285714626312256,
+        0.0
+      ]
+    }
+  },
+  "geometry": {
+    "request_seconds": 5.0,
+    "short_edge": 768,
+    "aspect_ratio": "16:9",
+    "output_width": 1344,
+    "output_height": 768,
+    "output_frames": 124,
+    "fps": 24,
+    "video_latent_t": 37,
+    "audio_sample_rate": 32000,
+    "audio_channels": 2
+  },
+  "source_server_configuration": {
+    "gpu_count": 8,
+    "tp_size": 8,
+    "ulysses_degree": 1,
+    "ring_degree": 1,
+    "performance_mode": "speed",
+    "dit_precision": "bf16",
+    "enable_torch_compile": false,
+    "causal_mode": "off",
+    "mask_cache": true,
+    "video_vae_weight_precision": "fp32",
+    "video_vae_decode_precision": "fp16",
+    "audio_vae_precision": "fp32",
+    "text_encoder_precision": "bf16",
+    "baseline_vae_defaults": {
+      "use_tiling": true,
+      "use_parallel_tiling": true,
+      "parallel_decode_mode": "tiled",
+      "vae_tile_size": 256,
+      "vae_tile_overlap_min": 64,
+      "vae_chunk_dim": -1
+    },
+    "resolved_attention_backend": null,
+    "resolved_offload_configuration": null
+  },
+  "light_vae": {
+    "repository": "stdstu123/LynnReal-Onmi-light-vae",
+    "revision": "e453444c1a52b73a0c5eb0023d208c473c2bb26a",
+    "decode_config": {
+      "student_tile_size": 272,
+      "student_long_axis_tile": 208,
+      "student_tile_overlap": 64,
+      "student_short_axis_overlap": 0,
+      "student_long_axis_overlap": 16,
+      "image_tile_size": 256,
+      "image_long_axis_tile": 256,
+      "image_context_tokens": 5,
+      "image_context_output_phase": 3,
+      "temporal_decode_protocol": "released-segment-prepadding-v3",
+      "tile_layout": "native"
+    },
+    "shards": [
+      {
+        "path": "diffusion_pytorch_model-00001.safetensors",
+        "size": 1972677224,
+        "sha256": "b59301c5ef504bf4e9913bc17ca238cc7476cdbd975521c1c43606f8150dd94e"
+      },
+      {
+        "path": "diffusion_pytorch_model-00002.safetensors",
+        "size": 1880036328,
+        "sha256": "0f9b5b8fa8ff42a7434c511c1a02008a4d8ce91733fbc52c0a8d0c12c13a5c0f"
+      },
+      {
+        "path": "diffusion_pytorch_model-00003.safetensors",
+        "size": 1880036304,
+        "sha256": "313af999b8a0ec690f6e84096b0b40252e00753e9d848b075d0ac1ea8dd97daf"
+      },
+      {
+        "path": "diffusion_pytorch_model-00004.safetensors",
+        "size": 1997042720,
+        "sha256": "ad3a673b56de50b7a0cd0ec63c3219dbd2c876002ef13277823419a191134e10"
+      }
+    ]
+  },
+  "latent_evidence": {
+    "historical_harness_saves_latents": false,
+    "historical_harness_shares_latents_between_variants": false,
+    "historical_latent_artifact_found": false,
+    "new_eval_requirement": "Sample once; persist normalized diffusion video latent and unchanged audio; decode each VAE from the same saved tensors and record hashes."
+  },
+  "unresolved_historical_fields": [
+    "original_nfe5_job_id",
+    "original_nfe5_runtime_code_sha",
+    "original_nfe5_resolved_model_snapshot",
+    "original_nfe5_dependency_lock",
+    "original_nfe5_resolved_attention_backend",
+    "original_nfe5_resolved_offload_configuration"
+  ],
+  "cases": [
+    {
+      "id": "01-rally-drift",
+      "category": "高动态",
+      "title": "雨夜拉力漂移",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A low tracking shot follows a rally car drifting through a wet mountain hairpin at night, tires throwing dense spray and gravel toward the camera, rapid counter-steering, suspension compression, bright headlights reflecting across the road, physically coherent high-speed motion, cinematic realism, synchronized engine revs and tire noise.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41001
+      }
+    },
+    {
+      "id": "02-motocross-jump",
+      "category": "高动态",
+      "title": "越野摩托飞跃",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A motocross rider launches over a dirt ramp in a packed stadium, the camera pans quickly alongside the bike, spinning wheels and individual dirt particles remain sharp, the rider lands hard and accelerates away, dramatic arena lights, realistic physics, synchronized engine and crowd audio.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41002
+      }
+    },
+    {
+      "id": "03-parkour-chase",
+      "category": "人物运动",
+      "title": "屋顶跑酷追逐",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A handheld rooftop parkour chase at golden hour, an athlete sprints, vaults a railing, jumps a narrow alley, rolls on landing and keeps running while the camera follows closely, natural articulated body motion, stable face and clothing details, strong parallax, realistic city ambience and footsteps.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41003
+      }
+    },
+    {
+      "id": "04-fpv-canyon",
+      "category": "镜头运动",
+      "title": "峡谷 FPV 穿越",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "An FPV drone races through a narrow red-rock canyon, banks around pillars, dives beneath a natural stone arch and skims above a reflective river, continuous aggressive camera rotation, strong depth and parallax, crisp rock texture, realistic wind rush and distant water.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41004
+      }
+    },
+    {
+      "id": "05-storm-lighthouse",
+      "category": "流体与光照",
+      "title": "风暴灯塔巨浪",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A violent ocean storm surrounds a lighthouse at dusk, a huge wave crashes against black rocks and explodes into fine spray as the lighthouse beam sweeps through rain and mist, complex moving water, foam and translucent droplets, stable architecture, thunder and roaring surf.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41005
+      }
+    },
+    {
+      "id": "06-silk-dance",
+      "category": "细节稳定性",
+      "title": "丝绸与彩纸舞蹈",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A dancer performs a rapid spin on a dark theater stage while long red silk ribbons and hundreds of metallic confetti pieces spiral through moving spotlights, flowing fabric keeps fine folds and edges, coherent limbs and face, smooth orbiting camera, synchronized music and fabric movement.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41006
+      }
+    },
+    {
+      "id": "07-neon-fps",
+      "category": "游戏",
+      "title": "霓虹 FPS 冲刺",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "Stylized high-end first-person science-fiction game footage: the player sprints and slides through a neon industrial corridor, fires a plasma weapon at agile robots, bright particles and muzzle flashes illuminate a detailed weapon and readable minimal HUD, fast mouse-like camera turns, coherent gameplay motion and game sound effects.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41007
+      }
+    },
+    {
+      "id": "08-hover-racing",
+      "category": "游戏",
+      "title": "未来悬浮赛车",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "Third-person futuristic racing game footage follows a sleek hover car at extreme speed through a rain-soaked cyberpunk city, overtaking rivals, scraping a barrier and throwing sparks, sharp road markings and signs, stable chase camera, strong motion and reflections, synchronized racing audio.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41008
+      }
+    },
+    {
+      "id": "09-voxel-builder",
+      "category": "游戏",
+      "title": "体素世界搭桥",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "Colorful voxel sandbox game footage in third person: a blocky explorer runs across a forest clearing, rapidly places a sequence of cubes to build a bridge over a stream, crosses it and turns toward a distant castle, crisp geometric edges, consistent grid structure, smooth game camera and cheerful ambient audio.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41009
+      }
+    },
+    {
+      "id": "10-dragon-chase",
+      "category": "复杂运动",
+      "title": "飞龙空中追逐",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A cinematic aerial chase between two dragons weaving around snow-covered mountain peaks, the lead dragon beats its wings, folds them into a steep dive through clouds, then pulls up above a frozen lake, detailed scales remain stable during fast motion, sweeping camera, volumetric light, wind and wing audio.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 41010
+      }
+    }
+  ]
+}

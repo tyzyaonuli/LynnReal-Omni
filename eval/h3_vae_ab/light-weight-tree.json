@@ -1,0 +1,92 @@
+[
+  {
+    "type": "file",
+    "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+    "size": 1519,
+    "path": ".gitattributes"
+  },
+  {
+    "type": "file",
+    "oid": "c389b45855337ccec8ddeb389f4fe902abcd0b19",
+    "size": 17604,
+    "path": "LICENSE"
+  },
+  {
+    "type": "file",
+    "oid": "71656fffcc45e72f4bad2058eabcddd83e948561",
+    "size": 378,
+    "path": "NOTICE"
+  },
+  {
+    "type": "file",
+    "oid": "dd23b66f9c2c60d3a5a9d58ab960588dbcd2a2ba",
+    "size": 1082,
+    "path": "README.md"
+  },
+  {
+    "type": "file",
+    "oid": "4fba922ef94a5abbd80c248053cd4ef0396815cd",
+    "size": 2012,
+    "path": "config.json"
+  },
+  {
+    "type": "file",
+    "oid": "5599f126ab496de62ab51f1524ef8f21595c8b2d",
+    "size": 376,
+    "path": "decode_config.json"
+  },
+  {
+    "type": "file",
+    "oid": "b65fa53fa6af2cc0a97f70b66041a0902aea733a",
+    "size": 1972677224,
+    "lfs": {
+      "oid": "b59301c5ef504bf4e9913bc17ca238cc7476cdbd975521c1c43606f8150dd94e",
+      "size": 1972677224,
+      "pointerSize": 135
+    },
+    "xetHash": "972e249fe8fd41a486985008e8751345f87f7f526c15a254c53c743ce53e6163",
+    "path": "diffusion_pytorch_model-00001.safetensors"
+  },
+  {
+    "type": "file",
+    "oid": "d3b3bc9c59cf951d5357c380d1162256fa932416",
+    "size": 1880036328,
+    "lfs": {
+      "oid": "0f9b5b8fa8ff42a7434c511c1a02008a4d8ce91733fbc52c0a8d0c12c13a5c0f",
+      "size": 1880036328,
+      "pointerSize": 135
+    },
+    "xetHash": "57821550f947cb6f578c8cb6fa630887021ae0bf48a8dd71603c085a6a1f6a0a",
+    "path": "diffusion_pytorch_model-00002.safetensors"
+  },
+  {
+    "type": "file",
+    "oid": "625430f0499d8ade5fd4f26a52f3f8bb51c7b8e2",
+    "size": 1880036304,
+    "lfs": {
+      "oid": "313af999b8a0ec690f6e84096b0b40252e00753e9d848b075d0ac1ea8dd97daf",
+      "size": 1880036304,
+      "pointerSize": 135
+    },
+    "xetHash": "ac12503c1a171fea6f0854db263e5c92e71d576f9bfb510794a697d6dcedf893",
+    "path": "diffusion_pytorch_model-00003.safetensors"
+  },
+  {
+    "type": "file",
+    "oid": "f8afedee1b56467ac4f1a9fa8cd7a5f4a5a1dd72",
+    "size": 1997042720,
+    "lfs": {
+      "oid": "ad3a673b56de50b7a0cd0ec63c3219dbd2c876002ef13277823419a191134e10",
+      "size": 1997042720,
+      "pointerSize": 135
+    },
+    "xetHash": "f7dabcee93b6ae658f6797c1280ba7d6c0bab26611f732e418667e5b9e069535",
+    "path": "diffusion_pytorch_model-00004.safetensors"
+  },
+  {
+    "type": "file",
+    "oid": "364b367d40716f7e17f4430eaf53f35fb048d1bb",
+    "size": 52320,
+    "path": "diffusion_pytorch_model.safetensors.index.json"
+  }
+]

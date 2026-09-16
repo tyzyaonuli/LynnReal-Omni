@@ -95,11 +95,13 @@ def main() -> None:
     parser.add_argument("--manifest-dir", type=Path, required=True)
     parser.add_argument("--stage-root", type=Path, required=True)
     parser.add_argument("--work-root", type=Path, default=Path("/local/lynnreal-model-stage"))
+    parser.add_argument("--h3-fl2va", action="store_true", help="Stage only the hash-pinned original H3 FL2VA transformer")
     args = parser.parse_args()
     args.work_root.mkdir(parents=True, exist_ok=True)
     downloader.signed_public_url = internal_signed_url
 
-    for name, (revision, repo) in MODELS.items():
+    models = {"h3-fl2va": ("bfc8ed0353f5a9733be73e6b2c98ec0948195b86", "MiniMax/MiniMax-H3")} if args.h3_fl2va else MODELS
+    for name, (revision, repo) in models.items():
         manifest = args.manifest_dir / f"{name}.tsv"
         objects = downloader.read_manifest(manifest)
         destination_root = args.stage_root / f"{name}-{revision}"

@@ -53,3 +53,7 @@ credentials.json
 /test/color_encoding.json
 /test/stream/step400_validation_context.pt
 /skill/lynnreal-prompt/references/evaluation.md
+
+# Reusable H3 VAE evaluation checks and local dependency archives.
+!/test/test_h3_vae_ab.py
+/vendor/
