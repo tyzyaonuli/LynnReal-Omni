@@ -7,27 +7,36 @@ body{background:#10131a;color:#edf1f7;font:16px system-ui;margin:24px auto;max-w
 <label>音轨 <select id="audio"><option value="mute">静音</option><option value="0">左侧</option><option value="1">中间</option><option value="2">右侧</option></select></label>
 <h2 id="title"></h2><p id="prompt"></p><p id="info" class="muted"></p>
 <div class="viewport"><div class="pair">
-<section><h3 id="label0"></h3><video id="v0" playsinline controls preload="metadata"></video><pre id="m0" hidden></pre></section>
-<section><h3 id="label1"></h3><video id="v1" playsinline controls preload="metadata"></video><pre id="m1" hidden></pre></section>
-<section><h3 id="label2"></h3><video id="v2" playsinline controls preload="metadata"></video><pre id="m2" hidden></pre></section>
+<section><h3 id="label0"></h3><video id="v0" playsinline controls preload="auto"></video><pre id="m0" hidden></pre></section>
+<section><h3 id="label1"></h3><video id="v1" playsinline controls preload="auto"></video><pre id="m1" hidden></pre></section>
+<section><h3 id="label2"></h3><video id="v2" playsinline controls preload="auto"></video><pre id="m2" hidden></pre></section>
 </div></div><p id="status" role="status"></p>
 <p class="muted">__COMPARISON_NOTE__</p>
 <p id="source" hidden class="muted">__SOURCE_NOTE__</p>
 <script>
 const cases=__DATA__, $=id=>document.getElementById(id), videos=[0,1,2].map(n=>$('v'+n));
-let index=0, revealed=false, sequential=false, loading=false, syncing=false, advancing=false;
+let index=0, revealed=false, sequential=false, loading=false, syncing=false, advancing=false, playToken=0;
 const positions=['左侧','中间','右侧'];
 function randomOrder(){const a=[0,1,2];for(let j=2;j>0;j--){const x=new Uint32Array(1);crypto.getRandomValues(x);const k=Math.floor(x[0]/4294967296*(j+1));[a[j],a[k]]=[a[k],a[j]]}return a}
 let orders=cases.map(randomOrder);
+const internalSeeks=new WeakSet();
+function seekVideo(v,t){internalSeeks.add(v);v.currentTime=t;}
+videos.forEach(v=>v.addEventListener('seeked',()=>internalSeeks.delete(v)));
 function entries(){const c=cases[index];return [{name:'H3 默认 VAE',src:c.a,metrics:c.a_metrics},{name:'LynnReal Light VAE',src:c.b,metrics:c.b_metrics},{name:'TAEHV taeh3',src:c.c,metrics:c.c_metrics}];}
 function labels(){const e=entries();orders[index].forEach((which,n)=>{const item=e[which];$('label'+n).textContent=revealed?positions[n]+' · '+item.name:positions[n]+' · 视频 '+(n+1);$('m'+n).hidden=!revealed;$('m'+n).textContent=item.metrics?`解码 ${(item.metrics.wall_seconds*1000).toFixed(1)} ms · 峰值 allocated ${(item.metrics.peak_allocated_bytes/2**30).toFixed(2)} GiB`:'历史参考；不作跨硬件耗时比较';});$('reveal').textContent=revealed?'隐藏 VAE 名称':'显示 VAE 名称';$('reveal').setAttribute('aria-pressed',String(revealed));$('source').hidden=!revealed;}
 function sound(){videos.forEach((v,n)=>v.muted=$('audio').value!==String(n));}
-function pause(){videos.forEach(v=>v.pause());}
+function pause(){playToken++;videos.forEach(v=>v.pause());}
 function load(n){loading=true;pause();index=(n+cases.length)%cases.length;revealed=false;advancing=false;const c=cases[index],e=entries();$('title').textContent=`${index+1}/${cases.length} ${c.title}`;$('prompt').textContent=c.prompt;$('info').textContent=`seed ${c.seed} · ${c.id}`;$('status').textContent='';orders[index].forEach((which,n)=>{videos[n].src=e[which].src;});labels();sound();loading=false;}
-async function play(){try{await Promise.all(videos.map(v=>v.play()));}catch(error){pause();sequential=false;$('status').textContent='播放未完成，请重试：'+error.message;}}
+async function play(){
+ const token=++playToken;videos.forEach(v=>{v.preload='auto'});$('status').textContent='正在缓冲三路视频，准备好后同步播放…';
+ try{
+  const ready=await new Promise((resolve,reject)=>{const start=Date.now();const timer=setInterval(()=>{if(token!==playToken){clearInterval(timer);resolve(false);return}if(videos.some(v=>v.error)){clearInterval(timer);reject(new Error('视频加载失败'));return}const buffered=videos.every(v=>Number.isFinite(v.duration)&&v.buffered.length&&v.buffered.start(0)<.1&&v.buffered.end(v.buffered.length-1)>=v.duration-.12);if(buffered){clearInterval(timer);resolve(true)}else if(Date.now()-start>120000){clearInterval(timer);reject(new Error('缓冲超时，请重试'))}},100)});
+  if(!ready)return;const t=videos[0].ended?0:videos[0].currentTime;videos.forEach(v=>{if(Math.abs(v.currentTime-t)>.01||v.ended)seekVideo(v,t)});await Promise.all(videos.map(v=>v.play()));if(token===playToken)$('status').textContent='三路同步播放中。';
+ }catch(error){pause();sequential=false;$('status').textContent='播放未完成，请重试：'+error.message;}
+}
 $('play').onclick=play;$('pause').onclick=()=>{sequential=false;pause()};$('prev').onclick=()=>{sequential=false;load(index-1)};$('next').onclick=()=>{sequential=false;load(index+1)};
 $('all').onclick=()=>{sequential=true;load(0);play()};$('reveal').onclick=()=>{revealed=!revealed;labels()};$('audio').onchange=sound;
 $('shuffle').onclick=()=>{sequential=false;const old=orders[index].join();let fresh;do{fresh=randomOrder()}while(fresh.join()===old);orders[index]=fresh;load(index)};
-videos.forEach((v,n)=>{v.addEventListener('error',()=>{$('status').textContent=positions[n]+'视频加载失败，请检查网络后重试。'});v.addEventListener('seeking',()=>{if(loading||syncing)return;syncing=true;videos.forEach(other=>{if(other!==v&&other.readyState>=2&&Math.abs(other.currentTime-v.currentTime)>.12)other.currentTime=v.currentTime});syncing=false});v.addEventListener('ended',()=>{if(advancing)return;advancing=true;pause();if(sequential&&index+1<cases.length){load(index+1);play()}else{sequential=false;$('status').textContent='本组播放完成。'}});});
-setInterval(()=>{const master=videos[0];if(master.paused||master.seeking)return;videos.slice(1).forEach(v=>{if(!v.paused&&!v.seeking&&v.readyState>=2&&Math.abs(v.currentTime-master.currentTime)>.15)v.currentTime=master.currentTime})},250);load(0);
+videos.forEach((v,n)=>{v.addEventListener('error',()=>{$('status').textContent=positions[n]+'视频加载失败，请检查网络后重试。'});v.addEventListener('seeking',()=>{if(loading||syncing||internalSeeks.has(v))return;syncing=true;videos.forEach(other=>{if(other!==v&&other.readyState>=2&&Math.abs(other.currentTime-v.currentTime)>.12)seekVideo(other,v.currentTime)});syncing=false});v.addEventListener('ended',()=>{if(advancing)return;advancing=true;pause();if(sequential&&index+1<cases.length){load(index+1);play()}else{sequential=false;$('status').textContent='本组播放完成。'}});});
+setInterval(()=>{const master=videos[0];if(master.paused||master.seeking)return;videos.slice(1).forEach(v=>{if(!v.paused&&!v.seeking&&v.readyState>=2&&Math.abs(v.currentTime-master.currentTime)>.15)seekVideo(v,master.currentTime)})},250);load(0);
 </script></html>
