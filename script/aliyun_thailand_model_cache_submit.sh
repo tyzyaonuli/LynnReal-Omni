@@ -8,7 +8,11 @@ PROFILE="${ALIYUN_PROFILE:-shengdong}"
 MODE="${1:-}"
 ACTION="${2:---dry-run}"
 MODEL_SET="${3:-lynnreal}"
-[[ "$MODEL_SET" == "lynnreal" || "$MODEL_SET" == "--h3-fl2va" || "$MODEL_SET" == "--h3-startup" ]] || { echo "invalid model selection" >&2; exit 2; }
+[[ "$MODEL_SET" == "lynnreal" || "$MODEL_SET" == "--h3-fl2va" || "$MODEL_SET" == "--h3-startup" || "$MODEL_SET" == "--h3-recover" ]] || { echo "invalid model selection" >&2; exit 2; }
+if [[ "$MODEL_SET" == "--h3-recover" ]]; then
+  [[ "$MODE" == --sync && "${H3_RECOVER_JOB:-}" =~ ^dlc[a-z0-9]+$ ]] || { echo "recovery requires --sync and H3_RECOVER_JOB" >&2; exit 2; }
+  git diff --quiet && git diff --cached --quiet || { echo "commit recovery code first" >&2; exit 2; }
+fi
 if [[ "$MODEL_SET" == "--h3-startup" ]]; then
   [[ "$MODE" == --sync && "${H3_STARTUP_MODE:-}" =~ ^(cold|warm)$ && "${H3_STARTUP_EXPERIMENT:-}" =~ ^[a-z0-9-]+$ ]] || { echo "startup requires --sync and H3_STARTUP_MODE/EXPERIMENT" >&2; exit 2; }
   git diff --quiet && git diff --cached --quiet || { echo "commit startup code first" >&2; exit 2; }
@@ -46,6 +50,10 @@ if [[ "$MODEL_SET" == "--h3-startup" ]]; then
   bundle_name="model-cache-$bundle_hash.tar.gz"
 fi
 bundle_uri="$THAILAND_OSS_CLI/code/lynnreal-omni/$bundle_name"
+if [[ "$MODEL_SET" == "--h3-recover" ]]; then
+  bundle_name="h3-recover-$(git rev-parse --short=12 HEAD).tar.gz"
+  bundle_uri="$THAILAND_OSS_CLI/code/lynnreal-omni/$bundle_name"
+fi
 
 account_id="$(aliyun --profile "$PROFILE" --connect-timeout 15 --read-timeout 30 \
   --retry-count 2 --user-agent "$USER_AGENT" sts GetCallerIdentity | jq -r .AccountId)"
@@ -80,11 +88,18 @@ if [[ "$MODEL_SET" == "--h3-startup" ]]; then
   user_command="set -euo pipefail; mkdir -p /workspace/lynnreal-model-cache; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_name -C /workspace/lynnreal-model-cache; cd /workspace/lynnreal-model-cache; export LYNNREAL_RELEASE_SHA=$(git rev-parse HEAD); python script/prepare_h3_startup_cache.py --experiment $H3_STARTUP_EXPERIMENT --mode $H3_STARTUP_MODE --output /mnt/world-model/results/lynnreal-omni/$job_name"
 fi
 
+if [[ "$MODEL_SET" == "--h3-recover" ]]; then
+    job_name="h3-metadata-recover-$H3_RECOVER_JOB"
+    user_command="set -euo pipefail; mkdir -p /workspace/h3-recover; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_name -C /workspace/h3-recover; cd /workspace/h3-recover; python script/recover_h3_metadata.py --job $H3_RECOVER_JOB"
+fi
 if [[ "$ACTION" == "--submit" ]]; then
   bundle_dir="$(mktemp -d)"
   trap 'rm -rf "$bundle_dir"' EXIT
   mkdir -p "$bundle_dir/source/script" "$bundle_dir/source/vendor"
   cp "$stage_script" "$sync_script" "$downloader" "$bundle_dir/source/script/"
+  if [[ "$MODEL_SET" == "--h3-recover" ]]; then
+    cp script/recover_h3_metadata.py "$bundle_dir/source/script/"
+  fi
   if [[ "$MODEL_SET" == "--h3-startup" ]]; then
     cp script/prepare_h3_startup_cache.py "$bundle_dir/source/script/"
   elif [[ "$MODEL_SET" == "--h3-fl2va" ]]; then
@@ -92,7 +107,7 @@ if [[ "$ACTION" == "--submit" ]]; then
     cp script/prepare_h3_vae_ab.py "$bundle_dir/source/script/"
     mkdir -p "$bundle_dir/source/eval"
     cp -a eval/h3_vae_ab "$bundle_dir/source/eval/"
-  else
+  elif [[ "$MODEL_SET" != "--h3-recover" ]]; then
     python3 "$manifest_builder" --output "$bundle_dir/source/vendor"
   fi
   tar -czf "$bundle_dir/$bundle_name" -C "$bundle_dir/source" .
