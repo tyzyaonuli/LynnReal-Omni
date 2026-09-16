@@ -25,8 +25,9 @@ def main():
     assert len(payload) < 2 * 1024 * 1024
     print('H3_METADATA_SHA256=' + hashlib.sha256(payload).hexdigest(), flush=True)
     encoded = base64.b64encode(payload).decode()
-    for index in range(0, len(encoded), 4096):
-        print('H3_METADATA_CHUNK=' + encoded[index:index + 4096], flush=True)
+    # PAI log retrieval truncates long lines; stay below its 2048-byte limit.
+    for index in range(0, len(encoded), 1024):
+        print('H3_METADATA_CHUNK=' + encoded[index:index + 1024], flush=True)
     print('H3_METADATA_END', flush=True)
 
 

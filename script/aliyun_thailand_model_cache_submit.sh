@@ -89,7 +89,7 @@ if [[ "$MODEL_SET" == "--h3-startup" ]]; then
 fi
 
 if [[ "$MODEL_SET" == "--h3-recover" ]]; then
-    job_name="h3-metadata-recover-$H3_RECOVER_JOB"
+    job_name="h3-metadata-recover-$H3_RECOVER_JOB-$(git rev-parse --short=8 HEAD)"
     user_command="set -euo pipefail; mkdir -p /workspace/h3-recover; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_name -C /workspace/h3-recover; cd /workspace/h3-recover; python script/recover_h3_metadata.py --job $H3_RECOVER_JOB"
 fi
 if [[ "$ACTION" == "--submit" ]]; then
