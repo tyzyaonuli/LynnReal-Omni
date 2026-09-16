@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 
-def build(results, manifest_path=None):
+def build(results, manifest_path=None, media_base=None):
     cases = []
     manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path else None
     expected = {c["id"]: c for c in manifest["cases"]} if manifest else None
@@ -30,7 +30,8 @@ def build(results, manifest_path=None):
     if expected is not None:
         order = {key: index for index, key in enumerate(expected)}
         cases.sort(key=lambda case: order[case["id"]])
-    data = json.dumps(cases, ensure_ascii=False).replace("<", "\\u003c")
+    displayed = [dict(c, a=media_base.rstrip('/') + '/' + c['a'], b=media_base.rstrip('/') + '/' + c['b']) for c in cases] if media_base else cases
+    data = json.dumps(displayed, ensure_ascii=False).replace("<", "\\u003c")
     template = '''<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>H3 Default VAE / LynnReal Light VAE</title><style>
 body{background:#10131a;color:#edf1f7;font:16px system-ui;margin:24px auto;max-width:1500px;padding:0 20px}

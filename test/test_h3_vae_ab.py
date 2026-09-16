@@ -61,6 +61,9 @@ class H3VaeABTests(unittest.TestCase):
             (folder / "baseline.json").write_text(json.dumps(record))
             (folder / "light.json").write_text(json.dumps(record))
             self.assertEqual(len(build(Path(out))), 1)
+            build(Path(out), media_base="https://example.com/previews/")
+            self.assertIn("https://example.com/previews/case1/baseline-web.mp4", (Path(out) / "player.html").read_text(encoding="utf-8"))
+            self.assertEqual(json.loads((Path(out) / "report.json").read_text(encoding="utf-8"))[0]["a"], "case1/baseline-web.mp4")
             manifest_path = Path(out) / "manifest.json"
             manifest_path.write_text(json.dumps({"cases": [dict(record["case"], id="different")]}))
             with self.assertRaisesRegex(ValueError, "Manifest/result mismatch"):

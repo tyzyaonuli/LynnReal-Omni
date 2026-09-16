@@ -133,3 +133,7 @@ python script/publish_h3_vae_ab.py --report /path/to/results/eval/report.json --
 This uses server-side OSS copies and per-object public-read ACLs, never a bucket
 ACL change. Verify anonymous HTTP access and browser rendering after publication;
 an OSS endpoint that forces HTML downloads needs an existing custom domain.
+Published HTML embeds absolute preview URLs, so downloading and opening just the
+HTML also works. Use `--publish --html-only` to refresh it without copying videos.
+The report JSON retains relative paths for portable regeneration. The publisher
+requires the per-case JSON records beside `report.json` to rebuild the page.

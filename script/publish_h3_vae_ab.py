@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from report_h3_vae_ab import build
 
 
 def publication_files(report):
@@ -28,6 +29,7 @@ def main():
     parser.add_argument("--job-id", required=True)
     parser.add_argument("--profile", default="shengdong")
     parser.add_argument("--publish", action="store_true", help="Default only prints the exact publication plan")
+    parser.add_argument("--html-only", action="store_true", help="Refresh HTML using already published previews")
     args = parser.parse_args()
     if not re.fullmatch(r"dlc[a-z0-9]+", args.job_id):
         raise ValueError("Invalid job ID")
@@ -43,9 +45,14 @@ def main():
         subprocess.run(["aliyun", "--profile", args.profile, "oss", *command,
                         "--region", "ap-southeast-7", "--endpoint", "oss-ap-southeast-7.aliyuncs.com"], check=True)
     # Copy and publish the videos first, then the player. Never change bucket ACL.
-    for name in files[1:] + files[:1]:
-        oss("cp", source + name, target + name, "--force")
-        oss("set-acl", target + name, "public-read", "--force")
+    if not args.html_only:
+        for name in files[1:]:
+            oss("cp", source + name, target + name, "--force")
+            oss("set-acl", target + name, "public-read", "--force")
+    media_base = f"https://{bucket}.oss-ap-southeast-7.aliyuncs.com/{prefix}"
+    build(args.report.parent, Path(__file__).resolve().parents[1] / "eval/h3_vae_ab/manifest.json", media_base)
+    oss("cp", str(args.report.parent / "player.html"), target + "player.html", "--force")
+    oss("set-acl", target + "player.html", "public-read", "--force")
     print(f"https://{bucket}.oss-ap-southeast-7.aliyuncs.com/{prefix}player.html")
 
 
