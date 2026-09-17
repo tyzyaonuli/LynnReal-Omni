@@ -59,7 +59,7 @@ selection and successful LightVAE loading. Set `PROBE_RESULT` to its JSON receip
 path. The existing environment archive is reused, without installing dependencies
 on the B300.
 
-## Single-case smoke, then all ten
+## Single-case smoke, then the full manifest
 
 Use the existing Thailand submitter, which retains its region/workspace/quota,
 role injection and exactly-one-GPU constraint:
@@ -71,7 +71,8 @@ bash script/aliyun_thailand_b300_submit.sh --submit --h3-vae-ab \
   --runtime-receipt /path/runtime-preflight.json --case 01-rally-drift
 ```
 
-Omit `--case` for the ten-case run; replace `--submit` with `--dry-run` to render.
+Omit `--case` for the full current 22-case manifest (original ten plus twelve human-detail cases); replace `--submit` with `--dry-run` to render.
+Use `--case human-details` to run only the twelve additional cases.
 Only submit the full run after the smoke's latent/audio hashes, geometry and
 videos pass inspection. All authored code must be committed before submission.
 
