@@ -2,7 +2,7 @@
 <title>三路 VAE 盲看对比</title><style>
 body{background:#10131a;color:#edf1f7;font:16px system-ui;margin:24px auto;max-width:1900px;padding:0 20px}button,select{padding:10px;margin:5px;background:#24334b;color:white;border:1px solid #46546a;border-radius:6px;cursor:pointer}.pair{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;min-width:780px}.viewport{overflow-x:auto}video{width:100%;background:#000;aspect-ratio:7/4}h3{min-height:1.6em}pre{white-space:pre-wrap;color:#b3c5dc}#prompt{line-height:1.5}.muted{color:#aebcd0;font-size:14px}#status{color:#f0ce87;min-height:1.5em}[hidden]{display:none!important}
 </style><h1>三路 VAE 盲看对比</h1>
-<p class="muted">10 组 · 1344×768 · 124 帧 · 24 fps。每组独立随机排列，本次打开期间保持不变。默认隐藏名称与指标，揭晓后切换用例会重新隐藏。</p>
+<p class="muted"><span id="count"></span> 组 · 1344×768 · 124 帧 · 24 fps。每组独立随机排列，本次打开期间保持不变。默认隐藏名称与指标，揭晓后切换用例会重新隐藏。</p>
 <button id="prev">上一组</button><button id="next">下一组</button><button id="play">同步播放</button><button id="pause">暂停</button><button id="all">顺序播放全部</button><button id="reveal" aria-pressed="false">显示 VAE 名称</button><button id="shuffle">重新随机排列</button>
 <label>音轨 <select id="audio"><option value="mute">静音</option><option value="0">左侧</option><option value="1">中间</option><option value="2">右侧</option></select></label>
 <h2 id="title"></h2><p id="prompt"></p><p id="info" class="muted"></p>
@@ -15,6 +15,7 @@ body{background:#10131a;color:#edf1f7;font:16px system-ui;margin:24px auto;max-w
 <p id="source" hidden class="muted">__SOURCE_NOTE__</p>
 <script>
 const cases=__DATA__, $=id=>document.getElementById(id), videos=[0,1,2].map(n=>$('v'+n));
+$('count').textContent=cases.length;
 let index=0, revealed=false, sequential=false, loading=false, syncing=false, advancing=false, playToken=0;
 const positions=['左侧','中间','右侧'];
 function randomOrder(){const a=[0,1,2];for(let j=2;j>0;j--){const x=new Uint32Array(1);crypto.getRandomValues(x);const k=Math.floor(x[0]/4294967296*(j+1));[a[j],a[k]]=[a[k],a[j]]}return a}

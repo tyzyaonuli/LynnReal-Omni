@@ -65,7 +65,7 @@ def resolve(manifest_path, case_id):
     assert manifest["sampling"]["actual_nfe"] == 5
     assert manifest["sampling"]["num_inference_steps"] == 6
     cases = manifest["cases"]
-    assert len(cases) == 10 and len({c["id"] for c in cases}) == 10
+    assert cases and len({c["id"] for c in cases}) == len(cases)
     for case in cases:
         q = case["request"]
         assert q["task"] == "t2va" and q["conditions"] == []
@@ -77,7 +77,7 @@ def resolve(manifest_path, case_id):
     geometry = manifest["geometry"]
     assert (geometry["output_width"], geometry["output_height"], geometry["output_frames"], geometry["fps"]) == (1344, 768, 124, 24)
     if case_id:
-        cases = [c for c in cases if c["id"] == case_id]
+        cases = [c for c in cases if c["id"] == case_id or c.get('suite') == case_id]
         if not cases:
             raise ValueError(f"unknown case {case_id}")
     return manifest, cases

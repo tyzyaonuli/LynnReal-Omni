@@ -1,5 +1,20 @@
 # Official H3 / Light VAE comparison
 
+The `human-details` extension adds twelve new cases (seeds 42001–42012), while
+retaining the original ten inputs. Select it with `--case human-details` in the
+existing launcher. Four cases isolate close facial/eye/teeth/hand detail; eight
+use medium or small faces, including full-body and multi-person compositions.
+The requested head fractions are framing targets, not measured guarantees;
+inspect actual outputs before interpreting small-face quality. Fixed cameras,
+deep focus and simple motions reduce competing sources of blur.
+
+Run default/Light once to generate shared inputs for this new suite, then run
+`--tae-only --resume-job <new-suite-job> --case human-details` on a subsequent
+single-GPU job. Do not reuse old-suite latents for new prompts or regenerate the
+original ten cases. New suite metadata/previews are uploaded with bounded
+retries; full masters and tensors remain on CPFS. Append verified new records
+to the existing randomized report only after all three outputs are available.
+
 The ten reference inputs are in `eval/h3_vae_ab/manifest.json`. H3 is the official
 FL2VA checkpoint at `bfc8ed0353f5a9733be73e6b2c98ec0948195b86`; this experiment
 does not use the LynnReal Standard or Flash denoiser. Five actual denoiser calls

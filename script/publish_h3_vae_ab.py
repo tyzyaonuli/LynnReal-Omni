@@ -18,8 +18,8 @@ def publication_files(report):
             if case[key] != expected:
                 raise ValueError("Unexpected preview path")
             files.append(expected)
-    if len(set(files)) != len(files) or len(files) != 21:
-        raise ValueError("Publication requires exactly ten distinct A/B pairs")
+    if not report or len(set(files)) != len(files):
+        raise ValueError("Publication requires distinct complete A/B pairs")
     return files
 
 

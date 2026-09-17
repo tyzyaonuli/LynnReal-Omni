@@ -99,7 +99,10 @@ class H3VaeABTests(unittest.TestCase):
 
     def test_original_inputs_and_unknown_case(self):
         manifest, cases = resolve(ROOT / "eval/h3_vae_ab/manifest.json", None)
-        self.assertEqual([c["request"]["seed"] for c in cases], list(range(41001, 41011)))
+        self.assertEqual([c["request"]["seed"] for c in cases[:10]], list(range(41001, 41011)))
+        _, details = resolve(ROOT / 'eval/h3_vae_ab/manifest.json', 'human-details')
+        self.assertEqual(len(details), 12)
+        self.assertEqual([c['request']['seed'] for c in details], list(range(42001,42013)))
         self.assertEqual(manifest["sampling"]["actual_nfe"], 5)
         with self.assertRaises(ValueError):
             resolve(ROOT / "eval/h3_vae_ab/manifest.json", "unknown")

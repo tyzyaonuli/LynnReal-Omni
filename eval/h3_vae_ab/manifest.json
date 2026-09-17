@@ -356,6 +356,311 @@
         "audio_flow_shift": 3.0,
         "seed": 41010
       }
+    },
+    {
+      "id": "11-face-turn",
+      "category": "人物细节",
+      "title": "人脸近景：缓慢转头",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "An unbroken photorealistic close-up portrait of an adult woman in her thirties with freckles and natural skin texture. Her face fills most of the frame from forehead to chin. She slowly turns her head from frontal view to a slight three-quarter angle and back, eyes open with a relaxed neutral expression. Fixed camera, sharp focus across both eyes, eyebrows, nose and lips, soft neutral daylight, plain gray background, no beauty filter, no motion blur. Quiet room ambience.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42001
+      },
+      "suite": "human-details"
+    },
+    {
+      "id": "12-eye-blink",
+      "category": "人物细节",
+      "title": "眼睛特写：眨眼与视线",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "An unbroken photorealistic extreme close-up of an adult man's eyes and upper nose, both eyes fully visible and filling the frame. He looks left, looks toward the camera, then blinks naturally once. Clearly visible eyelashes, eyelid folds, iris texture and small consistent catchlights. Locked camera, sharp focus, even diffuse daylight, plain background, natural skin detail, no makeup, no beauty filter, no motion blur. Quiet room ambience.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42002
+      },
+      "suite": "human-details"
+    },
+    {
+      "id": "13-speech-teeth",
+      "category": "人物细节",
+      "title": "口齿近景：说话与露齿微笑",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "An unbroken photorealistic close-up of an adult woman's face from eyebrows to chin, facing the camera. She slowly says hello and then smiles naturally, briefly showing her upper and lower teeth. Her lips, separate teeth, gums and cheeks are clearly visible with coherent mouth movement. Locked camera, sharp focus, soft frontal daylight, neutral background, realistic natural teeth and skin texture, no beauty filter, no motion blur. A clear quiet voice synchronized with the mouth.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42003
+      },
+      "suite": "human-details"
+    },
+    {
+      "id": "14-hands-fingers",
+      "category": "人物细节",
+      "title": "双手特写：逐指活动",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "An unbroken photorealistic close-up of an adult person's two hands held separately in front of a neutral gray background, palms toward the camera and all ten fingers fully inside the frame. The fingers slowly spread, curl gently and extend again, with the wrists mostly still. Both hands occupy most of the image. Clearly visible individual fingertips, fingernails, knuckles, palm lines and gaps between fingers. Locked camera, sharp focus, soft even daylight, realistic anatomy, no jewelry, no motion blur. Quiet room ambience.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42004
+      },
+      "suite": "human-details"
+    },
+    {
+      "id": "15-hand-face",
+      "category": "人物细节",
+      "title": "半身小脸：指尖触脸",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A photorealistic fixed medium-wide waist-up shot of an adult man seated at a desk, with the room and desktop clearly visible. His face occupies only about one eighth of the image height. He slowly raises his right hand, touches his cheek with his index finger, smiles briefly and lowers his hand. Preserve small eyes, mouth, individual fingers and the hand-face boundary. Both hands remain in frame. Even daylight, deep focus, no zoom, no camera movement, no close-up, no motion blur. Quiet office ambience.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42005
+      },
+      "suite": "human-details",
+      "face_scale": "medium-small"
+    },
+    {
+      "id": "16-glasses-smile",
+      "category": "人物细节",
+      "title": "半身小脸：戴镜露齿",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A photorealistic fixed medium-wide waist-up shot of an adult woman in her fifties seated in a bright living room. Her head is small in the composition, about one eighth of the image height. She slowly puts on thin round glasses with both hands and gives a natural smile showing her upper teeth. Keep her small eyes visible through the lenses, coherent mouth and fine finger outlines. Room context remains prominent, deep focus, no zoom or close-up, soft even daylight. Quiet room ambience.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42006
+      },
+      "suite": "human-details",
+      "face_scale": "medium-small"
+    },
+    {
+      "id": "17-fullbody-talk",
+      "category": "人物细节",
+      "title": "全身小脸：站立说话",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A photorealistic locked wide full-body shot of one adult woman standing several meters from the camera in a bright courtyard, her head occupying about one tenth of the image height, feet and open space clearly visible. She says a short friendly sentence, smiles with teeth briefly visible and makes a gentle open-handed gesture at chest level. Preserve readable small eyes and mouth, stable facial identity and separated fingers. Fixed framing for the entire shot, deep focus, even daylight, no zoom, no close-up, no motion blur. Synchronized quiet speech and outdoor ambience.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42007
+      },
+      "suite": "human-details",
+      "face_scale": "small"
+    },
+    {
+      "id": "18-two-person-table",
+      "category": "人物细节",
+      "title": "双人小脸：交谈与微笑",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A photorealistic locked wide shot of two adults sitting across a small cafe table, both shown from head to knees, with the cafe interior visible around them. Each face is small, approximately one tenth of the image height. One speaks briefly and the other smiles, showing teeth, while their hands rest visibly on the table and one hand lightly gestures. Stable distinct identities, preserve small eye and mouth shapes and separate fingers. Deep focus on both people, soft daylight, no zoom or close-up. Natural synchronized conversation and quiet cafe ambience.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42008
+      },
+      "suite": "human-details",
+      "face_scale": "small"
+    },
+    {
+      "id": "19-office-three",
+      "category": "人物细节",
+      "title": "三人小脸：会议交谈",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A photorealistic fixed wide office meeting shot with three adult coworkers seated behind a table, all faces and hands visible, each head only about one twelfth of image height. The center person speaks briefly and gestures slowly with one hand while the others listen and one smiles. Preserve distinct small faces, eye direction, mouth movement and fingers against the tabletop. Balanced daylight, deep focus across all three people, fixed camera and framing, no zoom, no close-up, no motion blur. Low synchronized conversation.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42009
+      },
+      "suite": "human-details",
+      "face_scale": "small"
+    },
+    {
+      "id": "20-street-walk",
+      "category": "人物细节",
+      "title": "双人全身：走路聊天",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A photorealistic locked wide street shot of two adults walking slowly side by side across the frame at a steady distance, shown full body with generous surrounding architecture. Each face remains about one twelfth of image height. They glance at each other, exchange a brief sentence and smile, with relaxed hands visible. Preserve their distinct small eyes and mouths, stable facial features and hand silhouettes through motion. Bright diffuse daylight, sharp deep focus, no camera tracking or zoom, no close-up, slow movement without motion blur. Footsteps and synchronized quiet speech.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42010
+      },
+      "suite": "human-details",
+      "face_scale": "small"
+    },
+    {
+      "id": "21-three-portrait",
+      "category": "人物细节",
+      "title": "三人合影：不同小脸表情",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A photorealistic locked wide group portrait of three adults of different ages standing side by side, shown full body with space between them, each head about one tenth of image height. They look toward the camera, blink naturally, then give different gentle smiles, one with teeth visible. All hands are visible by their sides; one person slowly gives a small wave. Preserve distinct small facial identities, eyes, tooth boundaries and individual fingers. Uniform soft daylight, deep focus, neutral garden background, no zoom or close-up. Quiet outdoor ambience.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42011
+      },
+      "suite": "human-details",
+      "face_scale": "small"
+    },
+    {
+      "id": "22-distant-wave",
+      "category": "人物细节",
+      "title": "远景人物：小脸与挥手",
+      "request": {
+        "model": "MiniMaxAI/MiniMax-H3",
+        "prompt": "A photorealistic locked wide shot of one adult man standing in a bright open plaza, full body visible with substantial empty space around him; his entire head occupies only about one sixteenth of image height. He looks toward the camera, smiles and slowly waves with an open hand near shoulder height. Keep the tiny face stable, preserve the eye and mouth locations and the gaps between fingers. Fixed distance and framing, deep focus, even daylight, no zoom, no close-up, no motion blur. Quiet plaza ambience.",
+        "seconds": 5.0,
+        "task": "t2va",
+        "conditions": [],
+        "target": {
+          "short_edge": 768,
+          "aspect_ratio": "16:9",
+          "duration_seconds": 5.0
+        },
+        "num_outputs_per_prompt": 1,
+        "num_inference_steps": 6,
+        "flow_shift": 12.0,
+        "audio_flow_shift": 3.0,
+        "seed": 42012
+      },
+      "suite": "human-details",
+      "face_scale": "small"
     }
-  ]
+  ],
+  "additional_suites": {
+    "human-details": {
+      "authored_date": "2026-09-17",
+      "provenance": "New user-requested face/eye/teeth/hand detail cases; not historical TAE inputs",
+      "case_ids": [
+        "11-face-turn",
+        "12-eye-blink",
+        "13-speech-teeth",
+        "14-hands-fingers",
+        "15-hand-face",
+        "16-glasses-smile",
+        "17-fullbody-talk",
+        "18-two-person-table",
+        "19-office-three",
+        "20-street-walk",
+        "21-three-portrait",
+        "22-distant-wave"
+      ],
+      "note": "Four close detail controls plus eight medium/small-face scenes. Requested head fractions are prompt targets, not guaranteed pixel measurements; review framing after generation."
+    }
+  }
 }

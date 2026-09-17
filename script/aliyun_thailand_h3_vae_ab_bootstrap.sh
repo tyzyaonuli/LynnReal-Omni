@@ -14,7 +14,7 @@ exec > >(tee -a "$RESULT/bootstrap.log") 2>&1
 finish() {
   local rc=$?
   if ((rc != 0)); then printf '%s\n' "$rc" > "$RESULT/FAILED"; fi
-  if [[ "${LYNNREAL_H3_TAE_ONLY:-0}" == 1 ]]; then
+  if [[ "${LYNNREAL_H3_TAE_ONLY:-0}" == 1 || "${LYNNREAL_H3_CASE:-}" == human-details ]]; then
     # Keep lossless masters on CPFS; publish small evidence first, then previews.
     python3 script/upload_h3_tae_results.py "$RESULT" "$OSS_RESULT"
   else
