@@ -30,6 +30,9 @@ def main():
     parser.add_argument("--profile", default="shengdong")
     parser.add_argument("--publish", action="store_true", help="Default only prints the exact publication plan")
     parser.add_argument("--html-only", action="store_true", help="Refresh HTML using already published previews")
+    parser.add_argument("--delivery-origin", default="https://review-cdn.loopit.com.cn",
+                        help="Browser origin; the OSS object path is appended unchanged")
+    parser.add_argument("--public-read", action="store_true", help="Explicitly set object public-read ACL (not needed for internal CDN)")
     parser.add_argument('--tae-reference', type=Path, help='Add historical TAE videos in randomized blind comparison')
     parser.add_argument('--tae-results', type=Path, help='Verified per-case TAE records from this B300 comparison')
     parser.add_argument('--tae-job-id', help='Source job for the ten new TAE previews')
@@ -38,7 +41,7 @@ def main():
         raise ValueError("Invalid job ID")
     files = publication_files(json.loads(args.report.read_text(encoding="utf-8")))
     if args.tae_results:
-        if not args.tae_job_id or not re.fullmatch(r'dlc[a-z0-9]+',args.tae_job_id) or args.tae_reference:
+        if (not args.html_only and not args.tae_job_id) or (args.tae_job_id and not re.fullmatch(r'dlc[a-z0-9]+',args.tae_job_id)) or args.tae_reference:
             raise ValueError('Current TAE requires source job and no historical reference')
         build(args.report.parent,Path(__file__).resolve().parents[1]/'eval/h3_vae_ab/manifest.json',tae_results=args.tae_results)
     bucket = "leap-worldmodel-thailand"
@@ -51,21 +54,24 @@ def main():
     def oss(*command):
         subprocess.run(["aliyun", "--profile", args.profile, "oss", *command,
                         "--region", "ap-southeast-7", "--endpoint", "oss-ap-southeast-7.aliyuncs.com"], check=True)
-    # Copy and publish the videos first, then the player. Never change bucket ACL.
+    # Copy videos first, then the player. Internal CDN needs no public ACL.
+    def set_public(name):
+        if args.public_read:
+            oss("set-acl", target + name, "public-read", "--force")
     if not args.html_only:
         for name in files[1:]:
             oss("cp", source + name, target + name, "--force")
-            oss("set-acl", target + name, "public-read", "--force")
-    media_base = f"https://{bucket}.oss-ap-southeast-7.aliyuncs.com/{prefix}"
-    if args.tae_results:
+            set_public(name)
+    media_base = args.delivery_origin.rstrip('/') + '/' + prefix
+    if args.tae_results and not args.html_only:
         for case in json.loads(args.report.read_text(encoding='utf-8')):
             name = case['id']+'/tae-web.mp4'
             oss('cp',f'oss://{bucket}/world-model/results/lynnreal-omni/{args.tae_job_id}/eval/'+name,target+name,'--force')
-            oss('set-acl',target+name,'public-read','--force')
+            set_public(name)
     build(args.report.parent, Path(__file__).resolve().parents[1] / "eval/h3_vae_ab/manifest.json", media_base, args.tae_reference, args.tae_results)
     oss("cp", str(args.report.parent / "player.html"), target + "player.html", "--force")
-    oss("set-acl", target + "player.html", "public-read", "--force")
-    print(f"https://{bucket}.oss-ap-southeast-7.aliyuncs.com/{prefix}player.html")
+    set_public("player.html")
+    print(media_base + "player.html")
 
 
 if __name__ == "__main__":

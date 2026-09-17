@@ -147,7 +147,7 @@ python script/report_h3_vae_ab.py --results /path/to/results/eval
 The HTML references only adjacent preview videos. Quality judgments require
 watching the paired clips; pixel differences alone are not a quality verdict.
 
-Publish exactly the player and twenty browser previews to an isolated public
+Publish the player and the selected cases' browser previews to an isolated
 prefix (model metadata, latents and full result directories stay private):
 
 ```bash
@@ -155,13 +155,19 @@ python script/publish_h3_vae_ab.py --report /path/to/results/eval/report.json --
 # Inspect the printed object list, then run the same command with --publish.
 ```
 
-This uses server-side OSS copies and per-object public-read ACLs, never a bucket
-ACL change. Verify anonymous HTTP access and browser rendering after publication;
-an OSS endpoint that forces HTML downloads needs an existing custom domain.
+This uses server-side OSS copies and defaults to internal delivery through
+`https://review-cdn.loopit.com.cn/<OSS-object-path>`. Access requires the office
+network or company VPN. The object path is appended unchanged, without the bucket
+name. No public ACL or signed URL is needed; verify HTML and video delivery from
+the allowed network. `--delivery-origin` overrides the browser origin; the optional
+`--public-read` explicitly enables per-object ACL changes only where permitted.
 Published HTML embeds absolute preview URLs, so downloading and opening just the
 HTML also works. Use `--publish --html-only` to refresh it without copying videos.
 The report JSON retains relative paths for portable regeneration. The publisher
 requires the per-case JSON records beside `report.json` to rebuild the page.
+For a merged report whose cases come from multiple jobs, copy each preview from
+its recorded source job first, then use `--html-only` (including for TAE). The
+normal copy mode assumes one A/B source job and one TAE source job.
 
 For the three-column blind player, add
 `--tae-reference eval/h3_vae_ab/tae-reference.json --html-only --publish` to the
