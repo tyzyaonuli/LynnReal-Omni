@@ -188,7 +188,7 @@ if [[ "$RUN_MODE" == "eval" ]]; then
 fi
 user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_RUN_MODE=$RUN_MODE; $eval_exports exec bash script/aliyun_thailand_b300_inference_bootstrap.sh"
 if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
-  [[ "$H3_CASE" =~ ^[a-z0-9-]*$ ]] || { echo "invalid H3 case ID" >&2; exit 2; }
+  [[ "$H3_CASE" =~ ^[a-z0-9_-]*$ ]] || { echo "invalid H3 case ID" >&2; exit 2; }
   reconstruction_flag=0
   [[ -z "$RECONSTRUCTION" ]] || reconstruction_flag=1
   user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_H3_CASE=$H3_CASE LYNNREAL_H3_VARIANT=$H3_VARIANT LYNNREAL_H3_RESUME_JOB=$H3_RESUME_JOB LYNNREAL_H3_RETRY_CHECK=$H3_RETRY_CHECK LYNNREAL_H3_TAE_ONLY=$H3_TAE_ONLY LYNNREAL_VAE_RECONSTRUCTION=$reconstruction_flag; exec bash $bootstrap"
