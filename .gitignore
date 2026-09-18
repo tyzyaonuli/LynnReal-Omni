@@ -56,4 +56,5 @@ credentials.json
 
 # Reusable H3 VAE evaluation checks and local dependency archives.
 !/test/test_h3_vae_ab.py
+!/test/test_vae_reconstruction.py
 /vendor/

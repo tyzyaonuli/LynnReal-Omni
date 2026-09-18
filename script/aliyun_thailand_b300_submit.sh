@@ -34,6 +34,7 @@ H3_RESUME_JOB=""
 H3_VARIANT="both"
 H3_RETRY_CHECK="0"
 H3_TAE_ONLY="0"
+RECONSTRUCTION=""
 
 while (($#)); do
   case "$1" in
@@ -48,6 +49,7 @@ while (($#)); do
     --eval-manifest) EVAL_MANIFEST="${2:?--eval-manifest requires a path}"; shift 2 ;;
     --variant) EVAL_VARIANT="${2:?--variant requires standard or flash}"; shift 2 ;;
     --h3-vae-ab) RUN_MODE="h3-vae-ab"; shift ;;
+    --vae-reconstruction) RUN_MODE="h3-vae-ab"; RECONSTRUCTION="${2:?requires prepared manifest path}"; shift 2 ;;
     --case) H3_CASE="${2:?--case requires an ID}"; shift 2 ;;
     --resume-job) H3_RESUME_JOB="${2:?--resume-job requires a previous job ID}"; shift 2 ;;
     --retry-check) H3_RETRY_CHECK="1"; shift ;;
@@ -120,7 +122,12 @@ assert e['archive'] in r['environment_archives']
 PY
   dry_args=(--dry-run --output /tmp/h3-vae-ab-dry-run)
   [[ -z "$H3_CASE" ]] || dry_args+=(--case "$H3_CASE")
-  python3 script/eval_h3_vae_ab.py "${dry_args[@]}"
+  if [[ -n "$RECONSTRUCTION" ]]; then
+    [[ "$H3_TAE_ONLY" == 0 && "$H3_RETRY_CHECK" == 0 && -z "$H3_STARTUP_RECEIPT" ]] || { echo 'incompatible reconstruction flags' >&2; exit 2; }
+    python3 script/eval_vae_reconstruction.py "${dry_args[@]}" --manifest "$RECONSTRUCTION" --sources /unused
+  else
+    python3 script/eval_h3_vae_ab.py "${dry_args[@]}"
+  fi
 fi
 git diff --cached --quiet || { echo "staged changes are not supported by this submitter" >&2; exit 2; }
 git diff --quiet || {
@@ -155,6 +162,7 @@ diffusers_sha="584a47eb49eaf60fda2843317708eacc6a7d9622f1630d9badb0b33fc480aaba"
 bundle_id="$release_sha-$bootstrap_sha"
 if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
   bundle_id="$release_sha-$bootstrap_sha-h3-vae-ab-${H3_CASE:-all}"
+  [[ -z "$RECONSTRUCTION" ]] || bundle_id="$bundle_id-reconstruction-$(sha256sum "$RECONSTRUCTION" | cut -c1-12)"
   [[ -z "$H3_STARTUP_RECEIPT" ]] || bundle_id="$bundle_id-startup-$(sha256sum "$H3_STARTUP_RECEIPT" | cut -c1-12)"
 fi
 if [[ "$RUN_MODE" == "eval" ]]; then
@@ -181,7 +189,9 @@ fi
 user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_RUN_MODE=$RUN_MODE; $eval_exports exec bash script/aliyun_thailand_b300_inference_bootstrap.sh"
 if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
   [[ "$H3_CASE" =~ ^[a-z0-9-]*$ ]] || { echo "invalid H3 case ID" >&2; exit 2; }
-  user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_H3_CASE=$H3_CASE LYNNREAL_H3_VARIANT=$H3_VARIANT LYNNREAL_H3_RESUME_JOB=$H3_RESUME_JOB LYNNREAL_H3_RETRY_CHECK=$H3_RETRY_CHECK LYNNREAL_H3_TAE_ONLY=$H3_TAE_ONLY; exec bash $bootstrap"
+  reconstruction_flag=0
+  [[ -z "$RECONSTRUCTION" ]] || reconstruction_flag=1
+  user_command="set -euo pipefail; mkdir -p /workspace/LynnReal-Omni; tar -xzf /mnt/world-model/code/lynnreal-omni/$bundle_id.tar.gz -C /workspace/LynnReal-Omni; cd /workspace/LynnReal-Omni; export LYNNREAL_RELEASE_SHA=$release_sha LYNNREAL_H3_CASE=$H3_CASE LYNNREAL_H3_VARIANT=$H3_VARIANT LYNNREAL_H3_RESUME_JOB=$H3_RESUME_JOB LYNNREAL_H3_RETRY_CHECK=$H3_RETRY_CHECK LYNNREAL_H3_TAE_ONLY=$H3_TAE_ONLY LYNNREAL_VAE_RECONSTRUCTION=$reconstruction_flag; exec bash $bootstrap"
 fi
 
 registry="${IMAGE%%/*}"
@@ -199,6 +209,7 @@ if [[ "$SUBMIT" == true ]]; then
     if [[ "$RUN_MODE" == "h3-vae-ab" ]]; then
       cp "$H3_PREFLIGHT" "$bundle_dir/source/eval/h3_vae_ab/preflight-receipt.json"
       cp "$H3_RUNTIME_RECEIPT" "$bundle_dir/source/eval/h3_vae_ab/runtime-receipt.json"
+      [[ -z "$RECONSTRUCTION" ]] || cp "$RECONSTRUCTION" "$bundle_dir/source/eval/h3_vae_ab/reconstruction-manifest.json"
       [[ -z "$H3_STARTUP_RECEIPT" ]] || cp "$H3_STARTUP_RECEIPT" "$bundle_dir/source/eval/h3_vae_ab/startup-receipt.json"
     fi
     cp "$bootstrap" "$bundle_dir/source/$bootstrap"

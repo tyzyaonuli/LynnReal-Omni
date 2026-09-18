@@ -14,7 +14,7 @@ exec > >(tee -a "$RESULT/bootstrap.log") 2>&1
 finish() {
   local rc=$?
   if ((rc != 0)); then printf '%s\n' "$rc" > "$RESULT/FAILED"; fi
-  if [[ "${LYNNREAL_H3_TAE_ONLY:-0}" == 1 || "${LYNNREAL_H3_CASE:-}" == human-details ]]; then
+  if [[ "${LYNNREAL_VAE_RECONSTRUCTION:-0}" == 1 || "${LYNNREAL_H3_TAE_ONLY:-0}" == 1 || "${LYNNREAL_H3_CASE:-}" == human-details ]]; then
     # Keep lossless masters on CPFS; publish small evidence first, then previews.
     python3 script/upload_h3_tae_results.py "$RESULT" "$OSS_RESULT"
   else
@@ -79,6 +79,44 @@ assert torch.cuda.device_count() == 1
 assert torch.cuda.get_device_capability(0)[0] >= 10
 print({'torch': torch.__version__, 'gpu': torch.cuda.get_device_name(0), 'capability': torch.cuda.get_device_capability(0)}, flush=True)
 PY
+if [[ "${LYNNREAL_VAE_RECONSTRUCTION:-0}" == 1 ]]; then
+  checkpoint="$PERSIST/models/taehv-011dfc2112197741c540e0bdd5b7b67bcc930771/taeh3.pth"
+  manifest=eval/h3_vae_ab/reconstruction-manifest.json
+  sources="$PERSIST/inputs/reconstruction-$(sha256sum "$manifest" | cut -c1-16)"
+  mkdir -p "$sources" "$RESULT/eval"
+  "$PYTHON" - "$manifest" "$sources" <<'PY'
+import json,sys,shutil,hashlib
+from pathlib import Path
+m=json.loads(Path(sys.argv[1]).read_text()); target=Path(sys.argv[2])
+prefix=m['storage_prefix']
+assert prefix.startswith('world-model/lynnreal-omni/inputs/') and '..' not in prefix.split('/')
+source=Path('/mnt/world-model')/prefix.removeprefix('world-model/')
+for c in m['cases']:
+    import os
+    if os.environ.get('LYNNREAL_H3_CASE') and c['id']!=os.environ['LYNNREAL_H3_CASE']: continue
+    name=c['id']+'.mp4'; dst=target/name
+    def digest(p):
+        h=hashlib.sha256()
+        with p.open('rb') as f:
+            for block in iter(lambda:f.read(16<<20),b''): h.update(block)
+        return h.hexdigest()
+    if not dst.exists() or digest(dst)!=c['sha256']:
+        shutil.copyfile(source/name,dst.with_suffix('.partial'))
+        assert digest(dst.with_suffix('.partial'))==c['sha256']
+        dst.with_suffix('.partial').replace(dst)
+    print('source-ready',name,flush=True)
+PY
+  if [[ -n "${LYNNREAL_H3_RESUME_JOB:-}" ]]; then
+    cp -a "$PERSIST/results/$LYNNREAL_H3_RESUME_JOB/eval/." "$RESULT/eval/"
+  fi
+  args=(--manifest "$manifest" --sources "$sources" --output "$RESULT/eval" --h3 "$H3" --light-vae "$LIGHT" --checkpoint "$checkpoint")
+  [[ -z "${LYNNREAL_H3_CASE:-}" ]] || args+=(--case "$LYNNREAL_H3_CASE")
+  "$PYTHON" -u script/eval_vae_reconstruction.py "${args[@]}"
+  "$PYTHON" script/report_vae_reconstruction.py --results "$RESULT/eval"
+  date -u +%FT%TZ > "$RESULT/bootstrap-finish.txt"
+  printf 'complete\n' > "$RESULT/READY"
+  exit 0
+fi
 if [[ "${LYNNREAL_H3_TAE_ONLY:-0}" == 1 ]]; then
   checkpoint="$PERSIST/models/taehv-011dfc2112197741c540e0bdd5b7b67bcc930771/taeh3.pth"
   mkdir -p "$(dirname "$checkpoint")"

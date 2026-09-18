@@ -6,7 +6,7 @@ import time
 
 source, target = map(Path, sys.argv[1:])
 files = [p for p in source.rglob('*') if p.is_file()
-         and (p.suffix in ('.json', '.txt', '.log') or p.name.endswith('-web.mp4'))]
+         and (p.suffix in ('.json', '.txt', '.log', '.html') or p.name.endswith('-web.mp4'))]
 files.sort(key=lambda p: (p.suffix == '.mp4', str(p)))
 for path in files:
     destination = target/path.relative_to(source)
